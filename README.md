@@ -4,3 +4,8 @@ Add `tex/texmf-linux-64/bin` to `$PATH`, then run
 ```
 mtxrun --generate && context --make
 ```
+
+To load local fonts:
+```
+OSFONTDIR=/usr/share/fonts/:$HOME/.local/share/fonts mtxrun --scripts font --reload
+```
