@@ -257,6 +257,8 @@
      <cd:constant type="more"/>
      <cd:constant type="1*more"/>
      <cd:constant type="2*more"/>
+     <cd:constant type="fit"/>
+     <cd:constant type="profile"/>
     </cd:keywords>
    </cd:arguments>
   </cd:command>
@@ -48178,6 +48180,10 @@
       <cd:constant default="yes" type="yes"/>
       <cd:constant type="no"/>
       <cd:constant type="cd:number"/>
+     </cd:parameter>
+     <cd:parameter name="paragraph">
+      <cd:constant default="no" type="yes"/>
+      <cd:constant type="no"/>
      </cd:parameter>
      <cd:parameter name="escape">
       <cd:constant type="yes"/>

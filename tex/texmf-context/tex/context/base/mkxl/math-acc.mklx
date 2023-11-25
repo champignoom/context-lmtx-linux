@@ -172,6 +172,9 @@
    \ifcstok{\mathaccentparameter\c!alignsymbol}\v!yes
      \s!nooverflow\space
    \fi
+   \ifcstok{\mathaccentparameter\c!offset}\v!auto
+     \s!base\space
+   \fi
    \ifcase#kind\or
      \s!top\space
      \m_fixed
@@ -192,7 +195,7 @@
 
 %D Relative new:
 
-% \newconditional\c_math_accent_auto_dotless \settrue\c_math_accent_auto_dotless % cf opentype math
+% \newconditional\c_math_accent_auto_dotless \c_math_accent_auto_dotless\conditionaltrue % cf opentype math
 
 % \aliased\let\normalgrave\grave
 % \aliased\let\normalddot \ddot
@@ -307,6 +310,24 @@
 \definemathbottomaccent[\v!bottom:\v!stretch][wideunderrightarrow]    ["20EF]
 
 \aliased\let\mathring\ring % for a while
+
+% \permanent\protected\def\not#1{\Umathaccent class \mathordinarycode exact overlay 0 0 "338 {#1}}
+% \permanent\protected\def\not#1{\Umathaccent class \mathrelationcode exact overlay 0 0 "338 {#1}}
+% \permanent\protected\def\not#1{\Umathaccent class \mathbinarycode   exact overlay 0 0 "338 {#1}}
+%
+% \definemathcommand[slashD][ordinary]{\Umathaccent class \mathordinarycode exact  overlay 0 0 "338 {D}}
+% \definemathcommand[slashD][ordinary]{\Umathaccent class \mathordinarycode center overlay 0 0 "338 {D}}
+
+\permanent\tolerant\protected\def\slashed[#1]#:#2%
+  {\Umathaccent
+     \s!class  \mathcodechecked{#1}%
+     \s!center \space
+     \s!overlay\space
+     \zerocount \zerocount \forwardslashasciicode
+   {#2}} % exact when =
+
+% \definemathcommand[slashD]{\slashed[ordinary]{D}}
+% \definemathcommand[slashD]{\slashed{D}}
 
 \popoverloadmode
 

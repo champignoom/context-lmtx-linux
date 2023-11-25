@@ -25,8 +25,8 @@
 
 \installtextracker
   {framed.math}
-  {\settrue \c_framed_math_framed}
-  {\setfalse\c_framed_math_framed}
+  {\c_framed_math_framed\conditionaltrue}
+  {\c_framed_math_framed\conditionalfalse}
 
 \integerdef\c_framed_math_last_left \zerocount
 \integerdef\c_framed_math_last_right\zerocount
@@ -40,7 +40,7 @@
 
 \setupframed[\??mathframed][\c!location=\v!middle]
 
-\tolerant\permanent\protected\def\definemathframed[#1]#*[#2]#*[#3]%
+\tolerant\permanent\protected\def\definemathframed[#1]#*[#2]#*[#S#3]%
   {\ifarguments\or
      \defineframed[#1][\??mathframed]%
    \or
@@ -96,7 +96,7 @@
 
 \dimensiondef\d_math_framed_offset\zeropoint
 
-\def\math_framed#1#*[#2]#:#3%
+\def\math_framed#1#*[#S#2]#:#3%
   {\begingroup
    \ifconditional\c_framed_math_framed
      \defineboxanchor[temp]%
@@ -105,7 +105,7 @@
    %
    \scratchdimen\Umathaxis\Ustyle\mathstyle
    %
-   \edef\currentframed{#1}%
+   \cdef\currentframed{#1}%
    \setbox\scratchbox\hbox{\localframedwithsettings[#1][#2]%
      {\strut\global\dimensiondef\d_math_framed_offset\dimexpr
          \framedoffset/2
@@ -175,7 +175,7 @@
    strike:location=bottom]
 
 \permanent\protected\def\mathstrikeoutlabel
-  {\iftok{\framedparameter{strike:math}}\emptytoks
+  {\ifempty{\framedparameter{strike:math}}%
      \useframedstyleandcolor\c!textstyle\c!color
      \framedparameter{strike:text}%
    \else
@@ -263,7 +263,7 @@
 %D \stopformula
 %D \stoptyping
 
-\permanent\tolerant\protected\def\mparagraph[#1]#*#:#2%
+\permanent\tolerant\protected\def\mparagraph[#S#1]#*#:#2%
   {\vcenter class \mathconstructcode \bgroup % \mathwrappedcode would be like fraction
      \framed[\c!offset=\v!overlay,\c!frame=\v!overlay,\c!align=\v!middle,#1]{#2}%
    \egroup}
@@ -295,9 +295,9 @@
     \frozen\protected\instance\edefcsname\currentmathframed\endcsname{\pack_framed_mathframed[\currentmathframed]}%
 \to \everydefinemathframed
 
-\tolerant\protected\def\pack_framed_mathframed[#1]#*[#2]#:#3% needs testing !
+\tolerant\protected\def\pack_framed_mathframed[#1]#*[#S#2]#:#3% needs testing !
   {\begingroup
-   \edef\currentmathframed{#1}%
+   \cdef\currentmathframed{#1}%
    \setupcurrentmathframed[#2]%
    \c_framed_mstyle\normalmathstyle
    \edef\m_framed_location{\mathframedparameter\c!location}%
@@ -306,7 +306,7 @@
        \setbox\scratchbox\hbox\bgroup
          \Ustartmath
          \triggermathstyle\c_framed_mstyle
-         \the\t_pack_framed_mathframed
+         \expand\t_pack_framed_mathframed
          \mathatom \mathunspacedcode\bgroup
            #3%
          \egroup

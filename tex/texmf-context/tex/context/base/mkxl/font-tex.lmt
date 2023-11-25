@@ -85,7 +85,7 @@ local function setboxglyph(specification)
     end
 end
 
-local function setboxdirectly(font,unicode,box) -- hash based on wd/ht/dp
+local function setboxdirectly(font,unicode,box,expose) -- hash based on wd/ht/dp
     if box then
         local tfmdata      = fontdata[font]
         local glyphboxes   = (tfmdata.glyphboxes or 0) + 1
@@ -97,6 +97,7 @@ local function setboxdirectly(font,unicode,box) -- hash based on wd/ht/dp
             depth   = box.depth  or 0,
             unicode = unicode,
             objnum  = tex.boxresources.save(box,nil,nil,true),
+            expose  = expose, -- permit color etc
         }
         local specification = {
             code = newdata

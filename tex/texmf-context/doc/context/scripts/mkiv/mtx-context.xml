@@ -4,7 +4,7 @@
     <metadata>
         <entry name="name">mtx-context</entry>
         <entry name="detail">ConTeXt Process Management</entry>
-        <entry name="version">1.04</entry>
+        <entry name="version">1.05</entry>
         <entry name="comment">external helpinfo file</entry>
     </metadata>
     <flags>
@@ -177,8 +177,11 @@
                 <flag name="global">
                     <short>assume given file present elsewhere</short>
                 </flag>
-                    <flag name="nofile">
+                <flag name="nofile">
                     <short>use dummy file as jobname</short>
+                </flag>
+                <flag name="forceinput">
+                    <short>use this file as input file instead of the given one</short>
                 </flag>
             </subcategory>
         </category>
@@ -250,6 +253,14 @@
             <subcategory>
                 <flag name="pipe">
                     <short>do not check for file and enter scroll mode (<ref name="dummyfile"/>=whatever.tmp)</short>
+                </flag>
+            </subcategory>
+            <subcategory>
+                <flag name="parallel">
+                    <short>process multiple files at the same time (you can specify a number of processes, default: 8)</short>
+                </flag>
+                <flag name="parallellist">
+                    <short>process commands in this file (lines that start with 'context')</short>
                 </flag>
             </subcategory>
             <subcategory>

@@ -89,7 +89,7 @@
   {\mathstylehbox to \scratchwidth{\usemathstackerscolorparameter\c!color
      \hss
      \hskip\mathstackersparameter\c!topoffset\relax % for manual italic correction
-   % \ifcsname\??mathextensiblefallbacks\number\scratchunicode\endcsname
+   % \ifcsname\??mathextensiblefallbacks\the\scratchunicode\endcsname
    %   \lastnamedcs
    % \else
        \Umathchar\zerocount\zerocount\scratchunicode
@@ -208,17 +208,18 @@
 \lettonothing\m_math_stackers_text_bottom
 \lettonothing\m_math_stackers_text_middle
 
-\def\math_stackers_flushtext#command#text%
+\def\math_stackers_flushtext#command#style#color#text%
   {\ifdim\scratchleftoffset >\zeropoint\math_stackers_skip\scratchleftoffset \fi
    \ifx\p_strut\v!no \else
      \strut
    \fi
+   \usemathstackersstyleandcolor#style#color%
    \mathstackersparameter#command#text%
    \ifdim\scratchrightoffset>\zeropoint\math_stackers_skip\scratchrightoffset\fi}
 
-\def\math_stackers_toptext   {\math_stackers_flushtext\c!topcommand   \m_math_stackers_text_top   }
-\def\math_stackers_bottomtext{\math_stackers_flushtext\c!bottomcommand\m_math_stackers_text_bottom}
-\def\math_stackers_middletext{\math_stackers_flushtext\c!middlecommand\m_math_stackers_text_middle}
+\def\math_stackers_toptext   {\math_stackers_flushtext\c!topcommand   \c!topstyle   \c!topcolor   \m_math_stackers_text_top   }
+\def\math_stackers_bottomtext{\math_stackers_flushtext\c!bottomcommand\c!bottomstyle\c!bottomcolor\m_math_stackers_text_bottom}
+\def\math_stackers_middletext{\math_stackers_flushtext\c!middlecommand\c!middlestyle\c!middlecolor\m_math_stackers_text_middle}
 
 \def\math_stackers_content
   {\ifcase\scratchcounter
@@ -239,7 +240,7 @@
 \letcsname\??mathstackersalternative\v!default\endcsname\math_stackers_content
 
 \setupmathstackers
-  [\c!mp=math:stacker:\number\scratchunicode,
+  [\c!mp=math:stacker:\the\scratchunicode,
    \c!mpheight=\mathcharht\scratchunicode,
    \c!mpdepth=\mathchardp\scratchunicode,
    \c!mpoffset=.25\mathexheight]
@@ -339,7 +340,7 @@
 
 \protected\def\math_stackers_triplet#method#category#codepoint#toptext#bottomtext%
   {\begingroup
-   \edef\currentmathstackers{#category}%
+   \cdef\currentmathstackers{#category}%
    \mathstackersparameter\c!left\relax
    \dostarttagged\t!mstacker\currentmathstackers
    \ifmmode\math_atom_by_parameter\mathstackersparameter\else\dontleavehmode\fi
@@ -350,8 +351,7 @@
       \edef\m_math_stackers_text_top   {#toptext}%
       \edef\m_math_stackers_text_bottom{#bottomtext}%
       \ifparameter#bottomtext\or
-        \edef\p_order{\mathstackersparameter\c!order}%
-        \ifx\p_order\v!reverse
+        \ifcstok{\mathstackersparameter\c!order}\v!reverse
           \swapmacros\m_math_stackers_text_top\m_math_stackers_text_bottom
         \fi
       \fi
@@ -495,10 +495,22 @@
      \frozen\protected\edefcsname#2\endcsname{\math_stackers_auto_normal{#1}{\number#3}}%
    \fi}
 
+% \tolerant\protected\def\math_stackers_auto_normal#1#2#*[#3]#:#=#*#=%
+%   {\begingroup
+%    \scratchcounter#2\relax
+%    \cdef\currentmathstackers{\ifparameter#3\or#3\else#1\fi}%
+%    \math_stackers_triplet\zerocount\currentmathstackers\scratchcounter{#4}{#5}%
+%    \endgroup}
+
 \tolerant\protected\def\math_stackers_auto_normal#1#2#*[#3]#:#=#*#=%
   {\begingroup
    \scratchcounter#2\relax
-   \edef\currentmathstackers{\ifparameter#3\or#3\else#1\fi}%
+   \cdef\currentmathstackers{#1}%
+   \ifhastok={#3}%
+     \setupcurrentmathstackers[#3]%
+   \orelse\ifparameter#3\or
+     \cdef\currentmathstackers{#3}%
+   \fi
    \math_stackers_triplet\zerocount\currentmathstackers\scratchcounter{#4}{#5}%
    \endgroup}
 
@@ -526,9 +538,8 @@
 
 \protected\def\math_stackers_start_group#category%
   {\begingroup
-   \edef\currentmathstackers{#category}%
-   \edef\p_limits{\mathstackersparameter\c!mathlimits}%
-   \ifx\p_limits\v!yes
+   \cdef\currentmathstackers{#category}%
+   \ifcstok{\mathstackersparameter\c!mathlimits}\v!yes
      \def\math_stackers_stop_group{\egroup\endgroup\ordlimits}%
    % \mathop\bgroup
      \mathaccent\bgroup
@@ -545,7 +556,7 @@
 
 \setupmathstackers[lt=\zeropoint,rt=\zeropoint,lb=\zeropoint,rb=\zeropoint]
 
-\tolerant\protected\def\math_stackers_make_double#top#bottom#category#codepoint#codeextra#spacer[#settings]#:#text%
+\tolerant\protected\def\math_stackers_make_double#top#bottom#category#codepoint#codeextra#spacer[#S#settings]#:#text%
   {\math_stackers_start_group{#category}%
    \c_math_stackers_top      #top\relax
    \c_math_stackers_bottom   #bottom\relax
@@ -695,9 +706,9 @@
 \permanent\tolerant\protected\def\definemathdouble[#category]#spacer[#command]#spacer[#topcode]#spacer[#bottomcode]%
   {\frozen\protected\defcsname#command\endcsname{\math_stackers_handle_direct\plusone\plusone{#category}{#topcode}{#bottomcode}}}
 
-\permanent\tolerant\protected\def\mathover[#category]#spacer[#settings]#:#topcode#text%
+\permanent\tolerant\protected\def\mathover[#category]#spacer[#S#settings]#:#topcode#text%
   {\begingroup
-   \edef\currentmathstackers{\ifparameter#category\or#category\else\v!top\fi}%
+   \cdef\currentmathstackers{\ifparameter#category\or#category\else\v!top\fi}%
    \ifparameter#settings\or
       \setupcurrentmathstackers[#settings]%
    \fi
@@ -708,9 +719,9 @@
      {#text}%
    \endgroup}
 
-\permanent\tolerant\protected\def\mathunder[#category]#spacer[#settings]#:#bottomcode#text%
+\permanent\tolerant\protected\def\mathunder[#category]#spacer[#S#settings]#:#bottomcode#text%
   {\begingroup
-   \edef\currentmathstackers{\ifparameter#category\or#category\else\v!bottom\fi}%
+   \cdef\currentmathstackers{\ifparameter#category\or#category\else\v!bottom\fi}%
    \ifparameter#settings\or
       \setupcurrentmathstackers[#settings]%
    \fi
@@ -723,7 +734,7 @@
 
 \permanent\tolerant\protected\def\mathdouble[#category]#spacer[#settings]#:#topcode#bottomcode#text%
   {\begingroup
-   \edef\currentmathstackers{\ifparameter#category\or#category\else\v!both\fi}%
+   \cdef\currentmathstackers{\ifparameter#category\or#category\else\v!both\fi}%
    \ifparameter#settings\or
       \setupcurrentmathstackers[#settings]%
    \fi
@@ -746,7 +757,7 @@
    \mathstackersparameter\c!left\relax
    \dostarttagged\t!mstacker\currentmathstackers
    \ifmmode\math_atom_by_parameter\mathstackersparameter\else\dontleavehmode\fi
-     {\edef\currentmathstackers{#category}%
+     {\cdef\currentmathstackers{#category}%
       %
       \edef\p_offset     {\mathstackersparameter\c!offset}%
       \edef\p_location   {\mathstackersparameter\c!location}%
@@ -897,9 +908,10 @@
 %D Here is a bonus macro that takes three texts. It can be used to get consistent
 %D mixed usage.
 
-\permanent\tolerant\protected\def\mathtriplet[#category]#:#middletext#toptext#bottomtext%
+\permanent\tolerant\protected\def\mathtriplet[#1]#:#=#*#=#*#=%
   {\begingroup
-   \math_stackers_triplet\plusone{\ifarguments#category\or#category\else\currentmathstackers\fi}{#middletext}{#toptext}{#bottomtext}%
+   \ifparameter#1\or\cdef\currentmathstackers{#1}\fi
+   \math_stackers_triplet\plusone\currentmathstackers{#2}{#3}{#4}%
    \endgroup}
 
 \permanent\tolerant\protected\def\definemathtriplet[#1]#*[#2]#*[#3]% category name default
@@ -913,16 +925,16 @@
 
 \tolerant\protected\def\math_stackers_auto_triplet_yes[#1][#2]#*[#3]#:#=#*#=% [#2]% #2 gobble spaces
   {\begingroup
-   \edef\currentmathstackers{#1}%
+   \cdef\currentmathstackers{#1}%
    \def \m_math_stackers_text_middle{#2}%
-   \ifarguments#3\or\edef\currentmathstackers{#3}\fi
+   \ifparameter#3\or\cdef\currentmathstackers{#3}\fi
    \math_stackers_triplet\plusone\currentmathstackers\m_math_stackers_text_middle{#4}{#5}%
    \endgroup}
 
 \tolerant\protected\def\math_stackers_auto_triplet_nop[#1]#*[#2]#:#=#*#=#*#=% [#2]% #2 gobble spaces%
   {\begingroup
-   \edef\currentmathstackers{#1}%
-   \ifarguments#2\or\edef\currentmathstackers{#2}\fi
+   \cdef\currentmathstackers{#1}%
+   \ifparameter#2\or\cdef\currentmathstackers{#2}\fi
    \math_stackers_triplet\plusone\currentmathstackers{#3}{#4}{#5}%
    \endgroup}
 
@@ -1048,10 +1060,13 @@
 \definemathextensible [\v!reverse] [xequal]              ["003D]
 \definemathextensible [\v!reverse] [xleftarrow]          ["2190] % ["27F5]
 \definemathextensible [\v!reverse] [xrightarrow]         ["2192] % ["27F6]
-\definemathextensible [\v!reverse] [xleftrightarrow]     ["27F7]
-\definemathextensible [\v!reverse] [xLeftarrow]          ["27F8]
-\definemathextensible [\v!reverse] [xRightarrow]         ["27F9]
-\definemathextensible [\v!reverse] [xLeftrightarrow]     ["27FA]
+\definemathextensible [\v!reverse] [xleftrightarrow]     ["2194] % ["27F7]
+\definemathextensible [\v!reverse] [xlongleftarrow]      ["27F5]
+\definemathextensible [\v!reverse] [xlongrightarrow]     ["27F6]
+\definemathextensible [\v!reverse] [xlongleftrightarrow] ["27F7]
+\definemathextensible [\v!reverse] [xLeftarrow]          ["27F8] % why not ["27D2]
+\definemathextensible [\v!reverse] [xRightarrow]         ["27F9] % why not ["27D0]
+\definemathextensible [\v!reverse] [xLeftrightarrow]     ["27FA] % why not ["27D4]
 \definemathextensible [\v!reverse] [xtwoheadleftarrow]   ["219E]
 \definemathextensible [\v!reverse] [xtwoheadrightarrow]  ["21A0]
 \definemathextensible [\v!reverse] [xmapsto]             ["21A6]
@@ -1071,7 +1086,7 @@
 \definemathextensible [\v!mathematics] [mequal]              ["003D]
 \definemathextensible [\v!mathematics] [mleftarrow]          ["2190] % ["27F5]
 \definemathextensible [\v!mathematics] [mrightarrow]         ["2192] % ["27F6]
-\definemathextensible [\v!mathematics] [mleftrightarrow]     ["2194]
+\definemathextensible [\v!mathematics] [mleftrightarrow]     ["2194] % ["27F7]
 \definemathextensible [\v!mathematics] [mLeftarrow]          ["21D0]
 \definemathextensible [\v!mathematics] [mRightarrow]         ["21D2]
 \definemathextensible [\v!mathematics] [mLeftrightarrow]     ["21D4]
@@ -1095,7 +1110,7 @@
 \definemathextensible [\v!text] [tmapsto]             ["21A6]
 \definemathextensible [\v!text] [tleftarrow]          ["2190] % ["27F5]
 \definemathextensible [\v!text] [trightarrow]         ["2192] % ["27F6]
-\definemathextensible [\v!text] [tleftrightarrow]     ["2194]
+\definemathextensible [\v!text] [tleftrightarrow]     ["2194] % ["27F7]
 \definemathextensible [\v!text] [tLeftarrow]          ["21D0]
 \definemathextensible [\v!text] [tRightarrow]         ["21D2]
 \definemathextensible [\v!text] [tLeftrightarrow]     ["21D4]
@@ -1201,20 +1216,6 @@
 \definemathovertextextensible  [\v!bothtext] [overbrackettext]         ["23B4]
 \definemathundertextextensible [\v!bothtext] [underbrackettext]                ["23B5]
 
-%D Some bonus ones (for the moment here):
-
-\definemathstackers
-  [\v!chemistry]
-  [\c!offset=\v!max,
-   \c!left=\enspace,
-   \c!right=\enspace,
-   \c!hoffset=.5\mathemwidth]
-
-\definemathextensible [\v!chemistry] [cleftarrow]          ["2190]
-\definemathextensible [\v!chemistry] [crightarrow]         ["2192]
-\definemathextensible [\v!chemistry] [crightoverleftarrow] ["21C4]
-\definemathextensible [\v!chemistry] [cleftoverrightarrow] ["21C6]
-
 % \def\math_stackers_hacked_fill#1#2#3%
 %   {\mathematics
 %      {\begingroup
@@ -1277,11 +1278,14 @@
     \egroup
 \stopsetups
 
-\def\mathfiller#1%
-  {\begingroup
-   \scratchunicode#1\relax
-   \adaptivebox[mathfiller][\c!alternative=#1]{\hss\strut\hss}%
-   \endgroup}
+% \def\mathfiller#1%
+%   {\begingroup
+%    \scratchunicode#1\relax
+%    \adaptivebox[mathfiller][\c!alternative=#1]{\hss\strut\hss}%
+%    \endgroup}
+
+\permanent\protected\def\mathfiller#1%
+  {\adaptivebox[mathfiller][\c!alternative=#1]{\hss\strut\hss}}
 
 \permanent\tolerant\protected\def\defineextensiblefiller[#1]#*[#2]%
   {\frozen\instance\edefcsname#1\endcsname{\mathfiller{\number#2}}}
@@ -1332,7 +1336,7 @@
 
 \protected\def\math_stackers_unstacked_normal#category#codepoint%
   {\begingroup
-   \edef\currentmathstackers{#category}%
+   \cdef\currentmathstackers{#category}%
    \edef\p_moffset{\mathstackersparameter\c!moffset}%
    \ifconditional\indisplaymath
      \ifempty\p_moffset \else

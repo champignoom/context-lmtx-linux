@@ -59,7 +59,7 @@ end)
 
 local enabled = "vertical"  directives.register("math.extensibles", function(v) enabled = v end) -- default per 2022-08-25
 
-local function register_extensible(font,char,style,box)
+local function register_extensible(font,char,style,att,box)
     if enabled then
         -- We don't share (yet)!
         local fontdata = chardata[font]
@@ -70,14 +70,20 @@ local function register_extensible(font,char,style,box)
             else
                 return
             end
+if not box then -- pending build bot
+    box = att
+end
             local bx = tonut(box)
             -- actually we don't want colors and such so if we do finalize we
-            -- should be more selctive:
+            -- should be more selective:
     --         updaters.apply("tagging.state.disable")
     --         nodes.handlers.finalizelist(bx)
     --         updaters.apply("tagging.state.enable")
             local id = getid(bx)
-            local al = getattrlst(bx)
+if not att then -- pending build bot
+    att = getattrlst(box)
+end
+            local al = tonut(att)
             local wd, ht, dp = getwhd(bx)
             local unicode = oldchar.unicode or char
             -- we cannot have self referencing t3 fonts .. see devirtualize code
@@ -99,13 +105,14 @@ local function register_extensible(font,char,style,box)
                 dp = dp * 7200/7227
             end
             --
-        --  local private = fonts.helpers.setboxdirectly(font,unicode,box)
+        --  local private = fonts.helpers.setboxdirectly(font,unicode,box) -- mayeb cache in setboxdirectly
             local private = cache[wd][ht][dp][font][unicode]
             if not private then
-                private = fonts.helpers.setboxdirectly(font,unicode,box)
+                private = fonts.helpers.setboxdirectly(font,unicode,box,true) -- expose=true so we get color
                 cache[wd][ht][dp][font][unicode] = private
             end
             local glyph = new_glyph(font,private,al)
+            setattrlst(glyph,al)
             nuts.setscales(glyph,1000,sx,sy)
             --
          -- if fonts.hashes.properties[font].compactmath then

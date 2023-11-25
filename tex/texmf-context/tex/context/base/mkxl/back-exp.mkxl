@@ -97,7 +97,7 @@
          \clf_settagtabulatecell\c_tabl_tabulate_align\c_tabl_tabulate_kind
        \fi}%
     \enforced\permanent\protected\def\dotagtabulatesignal
-      {\dontleavehmode\signalcharacter\ignorespaces}%
+      {\dontleavehmode\signalcharacter\ignorespaces\ignorepars}%
 \to \everyenableelements
 
 \appendtoks
@@ -297,15 +297,14 @@
 \resetsystemmode\v!export
 
 \permanent\protected\def\doinitializeexport
-  {\edef\p_export{\backendparameter\c!export}%
-   \ifempty\p_export \else
+  {\ifempty{\backendparameter\c!export}\else
       % yes | xml
       \setuptagging[\c!state=\v!start]%
       \clf_initializeexport
       \setsystemmode\v!export
       \exportingtrue
       \writestatus\m!backend\empty % so messages will stand out a bit
-      \the\everyinitializeexport
+      \expand\everyinitializeexport
       \writestatus\m!backend\empty % so messages will stand out a bit
       \enforced\glet\doinitializeexport\relax
    \fi}
@@ -420,9 +419,9 @@
 % \def\strc_export_box#1%
 %   {\ctxlua{buffers.assign("#1",structures.tags.exportbox(\number\nextbox))}}
 
-\permanent\tolerant\protected\def\startboxexport[#1]%
+\permanent\tolerant\protected\def\startboxexport[#S#1]%
   {\begingroup
-   \iftok{#1}\emptytoks
+   \ifempty{#1}%
       \letboxexportparameter\c!buffer\v!yes
    \orelse\ifhastok={#1}\relax
       \setupmathexport[#1]%
@@ -438,9 +437,9 @@
      {\boxexportparameter\c!buffer}%
    \endgroup}
 
-\permanent\tolerant\protected\def\startmathexport[#1]%
+\permanent\tolerant\protected\def\startmathexport[#S#1]%
   {\begingroup
-   \iftok{#1}\emptytoks
+   \ifempty{#1}%
       \letboxexportparameter\c!buffer\v!yes
    \orelse\ifhastok={#1}\relax
       \setupmathexport[#1]%

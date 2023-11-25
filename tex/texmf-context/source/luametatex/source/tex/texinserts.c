@@ -52,6 +52,25 @@ insert_state_info lmt_insert_state = {
     .storing     = 0,
 };
 
+typedef enum saved_insert_entries {
+    saved_insert_index_entry  = 0, /* value_1 */
+    saved_insert_n_of_records = 1,
+} saved_insert_entries;
+
+# define saved_insert_index saved_value_1(saved_insert_index_entry)
+
+inline static void saved_inserts_initialize(void)
+{
+    saved_type(0) = saved_record_0;
+    saved_record(0) = insert_save_type;
+}
+
+void tex_show_insert_group(void)
+{
+    tex_print_str_esc("insert");
+    tex_print_int(saved_insert_index);
+}
+
 void tex_initialize_inserts(void)
 {
     insert_record *tmp = aux_allocate_clear_array(sizeof(insert_record), lmt_insert_state.insert_data.minimum, 1);
@@ -360,7 +379,7 @@ halfword tex_scan_insert_index(void)
             }
             break;
         case class_insert_mode:
-            index = tex_scan_int(0, NULL);
+            index = tex_scan_integer(0, NULL);
             if (! tex_valid_insert_id(index)) {
                 index = 0;
             }
@@ -444,19 +463,20 @@ void tex_undump_insert_data(dumpstream f) {
 
 void tex_run_insert(void)
 {
-    tex_set_saved_record(saved_insert_item_index, insert_index_save_type, 0, tex_scan_insert_index());
-    lmt_save_state.save_stack_data.ptr += saved_insert_n_of_items;
+    saved_inserts_initialize();
+    saved_insert_index = tex_scan_insert_index();
+    lmt_save_state.save_stack_data.ptr += saved_insert_n_of_records;
     tex_new_save_level(insert_group);
     tex_scan_left_brace();
     tex_normal_paragraph(insert_par_context);
     tex_push_nest();
     cur_list.mode = internal_vmode;
-    cur_list.prev_depth = ignore_depth_criterium_par;
+    cur_list.prev_depth = ignore_depth_criterion_par;
 }
 
 void tex_finish_insert_group(void)
 {
-    if (! tex_wrapped_up_paragraph(insert_par_context)) {
+    if (! tex_wrapped_up_paragraph(insert_par_context, 0)) {
         halfword p, q; /*tex for short-term use */
         scaled d;      /*tex holds |split_max_depth| in |insert_group| */
         halfword f;    /*tex holds |floating_penalty| in |insert_group| */
@@ -465,17 +485,17 @@ void tex_finish_insert_group(void)
         d = split_max_depth_par;
         f = floating_penalty_par;
         tex_unsave();
-        lmt_save_state.save_stack_data.ptr -= saved_insert_n_of_items;
-     // p = tex_vpack(node_next(cur_list.head), 0, packing_additional, max_dimen, direction_unknown);
+        lmt_save_state.save_stack_data.ptr -= saved_insert_n_of_records;
+     // p = tex_vpack(node_next(cur_list.head), 0, packing_additional, max_dimension, direction_unknown);
      // /* we don't do this: */
-     // /* p = tex_filtered_vpack(node_next(cur_list.head), 0, packing_additional, max_dimen, insert_group, direction_unknown, 0, 0); */
+     // /* p = tex_filtered_vpack(node_next(cur_list.head), 0, packing_additional, max_dimension, insert_group, direction_unknown, 0, 0); */
      // /* because it can induce loops. */
      // tex_pop_nest();
         p = node_next(cur_list.head);
         tex_pop_nest();
-        p = tex_vpack(p, 0, packing_additional, max_dimen, direction_unknown, holding_none_option);
+        p = tex_vpack(p, 0, packing_additional, max_dimension, direction_unknown, holding_none_option, NULL);
         {
-            halfword index = saved_value(saved_insert_item_index);
+            halfword index = saved_insert_index;
             halfword insert = tex_new_node(insert_node, 0);
             halfword maxdepth = tex_get_insert_maxdepth(index);
             halfword floating = tex_get_insert_penalty(index);

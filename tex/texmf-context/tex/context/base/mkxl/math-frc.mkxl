@@ -207,7 +207,7 @@
 
 \installlocalcurrenthandler\??mathfractions {mathfraction}
 
-\tolerant\protected\def\math_frac#1#*[#2]%%
+\tolerant\protected\def\math_frac#1#*[#S#2]%%
   {\beginmathgroup
    %
    \setlocalmathfractioncurrent{#1}% \edef\currentmathfraction{#1}%
@@ -301,6 +301,16 @@
                                                                      \Udelimiter\zerocount\fam\scratchcounterthree
                                                                      \s!noaxis \space
                                                                      \s!hfactor \numexpr\mathfractionparameter\c!hfactor\relax}
+\defcsname\??fractionmethods\v!center              \v!none\endcsname{\Uskewed
+                                                                     \Udelimiter\zerocount\fam\scratchcounterthree
+                                                                     \s!noaxis \space \s!center
+                                                                     \s!hfactor \numexpr\mathfractionparameter\c!hfactor\relax}
+\defcsname\??fractionmethods\v!center                     \endcsname{\Uskewedwithdelims
+                                                                     \Udelimiter\zerocount\fam\scratchcounterone
+                                                                     \Udelimiter\zerocount\fam\scratchcountertwo
+                                                                     \Udelimiter\zerocount\fam\scratchcounterthree
+                                                                     \s!noaxis \space \s!center
+                                                                     \s!hfactor \numexpr\mathfractionparameter\c!hfactor\relax}
 
 \setupmathfractions % we now inherit !
   [\c!topcolor=\mathfractionparameter\c!color,
@@ -318,6 +328,8 @@
         \mathfractionparameter\c!middle
       \orelse\ifx\p_method\v!line
         \mathfractionparameter\c!middle
+      \orelse\ifx\p_method\v!center
+        \mathfractionparameter\c!middle
       \else
         \mathfractionparameter\c!symbol
       \fi
@@ -327,6 +339,7 @@
       \p_method
       \ifx\p_method\v!horizontal
       \orelse\ifx\p_method\v!line
+      \orelse\ifx\p_method\v!center
       \orelse\ifcsname\??fractionmethods\p_method\p_rule\endcsname % \v!vertical
         \p_rule
       \else
@@ -490,15 +503,15 @@
 \def\math_fraction_set_threshold_display_auto
    {\Umathfractiondelsize\alldisplaystyles\maxdimen}
 
-\def\math_fraction_set_threshold_inline_ratio
+\def\math_fraction_set_threshold_inline_ratio % watch the reverse compensation
   {\edef\p_threshold{\mathfractionparameter\c!inlinethreshold}%
-   \Umathfractiondelsize\alltextstyles        \p_threshold\dimexpr\textface\relax
-   \Umathfractiondelsize\allscriptstyles      \p_threshold\dimexpr\scriptface\relax
-   \Umathfractiondelsize\allscriptscriptstyles\p_threshold\dimexpr\scriptscriptface\relax}
+   \Umathfractiondelsize\alltextstyles        \p_threshold\glyphscaled\textface
+   \Umathfractiondelsize\allscriptstyles      \p_threshold\glyphscaled\scriptface
+   \Umathfractiondelsize\allscriptscriptstyles\p_threshold\glyphscaled\scriptscriptface}
 
-\def\math_fraction_set_threshold_display_ratio
+\def\math_fraction_set_threshold_display_ratio % watch the reverse compensation
   {\edef\p_threshold{\mathfractionparameter\c!displaythreshold}%
-   \Umathfractiondelsize\alldisplaystyles\p_threshold\dimexpr\textface\relax}
+   \Umathfractiondelsize\alldisplaystyles\p_threshold\glyphscaled\textface}
 
 \setupmathfractions
   [\c!inlinethreshold=1.2,      % no unit but fraction
@@ -573,9 +586,11 @@
 % \permanent\protected\def\amsfrac{\csname\inlineordisplaymath id:ams:frac\endcsname}
 %
 % \appendtoks
-%     \doifelse{\mathematicsparameter\c!fractions}{ams}%
-%       {\enforced\let\frac\amsfrac}%
-%       {\enforced\let\frac\ctxfrac}%
+%     \iftok{\mathematicsparameter\c!fractions}{ams}
+%         \enforced\let\frac\amsfrac
+%     \else
+%         \enforced\let\frac\ctxfrac
+%     \fi
 % \to \everysetupmathematics
 
 % % Also gone:
@@ -716,12 +731,12 @@
 
 \defcsname\??mathalignsimple\v!split:\v!flushleft\endcsname#1%
   {#1%
-   \ifchkdim\mathfractionparameter\c!distance\or\hskip\lastchkdim\fi
+   \ifchkdimension\mathfractionparameter\c!distance\or\hkern\lastchkdimension\fi
    \hfill}
 
 \defcsname\??mathalignsimple\v!split:\v!flushright\endcsname#1%
   {\hfill
-   \ifchkdim\mathfractionparameter\c!distance\or\hskip\lastchkdim\fi
+   \ifchkdimension\mathfractionparameter\c!distance\or\hkern\lastchkdimension\fi
    \mathatom \s!class \mathordcode \s!unroll {}% prevents +/- seen as sign, unroll prevents empty box
    #1}
 
@@ -754,8 +769,14 @@
 \definemathfraction
   [\s!vfrac]
   [\v!horizontal]
-  [\c!hfactor=20,
-   \c!vfactor=10]
+  [\c!hfactor=20, % quite small, as we have 1000 as default
+   \c!vfactor=10] % quite small, as we have 1000 as default
+
+\definemathfraction
+  [hfrac]
+  [\c!method=\v!center,
+   \c!hfactor=\zerocount,
+   \c!vfactor=\zerocount]
 
 %D And a cheat (for Mikael):
 
@@ -860,7 +881,7 @@
 %     \raise
 %         \Umathskewedfractionvgap\textstyle
 %         \hbox\bgroup
-%             $\scriptstyle#1\hskip\dimexpr\Umathskewedfractionhgap\scriptstyle/2\relax$%
+%             $\scriptstyle#1\hkern\dimexpr\Umathskewedfractionhgap\scriptstyle/2\relax$%
 %         \egroup
 %         \hbox to \zeropoint\bgroup
 %             \hss$\textstyle/$\hss
@@ -868,7 +889,7 @@
 %     \lower
 %         \Umathskewedfractionvgap\textstyle
 %         \hbox\bgroup
-%             $\hskip\dimexpr\Umathskewedfractionhgap\scriptstyle/2\relax\scriptstyle#2$%
+%             $\hkern\dimexpr\Umathskewedfractionhgap\scriptstyle/2\relax\scriptstyle#2$%
 %         \egroup
 % }
 %
@@ -876,7 +897,7 @@
 %     \raise
 %         \Umathskewedfractionvgap\textstyle
 %         \hbox\bgroup
-%             $\scriptstyle#1\hskip\dimexpr\Umathskewedfractionhgap\textstyle/2\relax$%
+%             $\scriptstyle#1\hkern\dimexpr\Umathskewedfractionhgap\textstyle/2\relax$%
 %         \egroup
 %         \hbox to \zeropoint\bgroup
 %             \hss$\textstyle/$\hss
@@ -884,7 +905,7 @@
 %     \lower
 %         \Umathskewedfractionvgapskewedfractionvgap\textstyle
 %         \hbox\bgroup
-%             $\hskip\dimexpr\Umathskewedfractionhgap\textstyle/2\relax\scriptstyle#2$%
+%             $\hkern\dimexpr\Umathskewedfractionhgap\textstyle/2\relax\scriptstyle#2$%
 %         \egroup
 % }
 %

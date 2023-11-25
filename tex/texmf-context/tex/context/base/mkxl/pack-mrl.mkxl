@@ -43,7 +43,7 @@
    \begingroup
    \doifelsenextoptionalcs\pack_black_rule_pickup\pack_black_rule_indeed}
 
-\def\pack_black_rule_pickup[#1]%
+\def\pack_black_rule_pickup[#S#1]%
   {\setupcurrentblackrules[#1]%
    \pack_black_rule_indeed}
 
@@ -148,7 +148,7 @@
 %D We could of course have implemented this macro using \type {\leaders}, but this
 %D would probably have taken more tokens.
 
-\permanent\tolerant\protected\def\blackrules[#1]% probably never used
+\permanent\tolerant\protected\def\blackrules[#S#1]% probably never used
   {\hpack\bgroup % we keep this because breaking into lines breaks compatibility
    \ifarguments\or\setupcurrentblackrules[#1]\fi
    \scratchwidth   \directblackrulesparameter\c!width
@@ -408,7 +408,7 @@
    \thinrule
    \endgraf}
 
-\permanent\tolerant\protected\def\thinrules[#1]%
+\permanent\tolerant\protected\def\thinrules[#S#1]%
   {\bgroup
    \setupcurrentthinrules[#1]%
    \scratchcounter\directthinrulesparameter\c!n\relax
@@ -643,22 +643,25 @@
      {\scratchwidth \directtextrulesparameter\c!rulethickness\relax
       \scratchheight\dimexpr .5\exheight+.5\scratchwidth\relax
       \scratchdepth \dimexpr-.5\exheight+.5\scratchwidth\relax
-      \doifsomething{#1}
-        {\doifelse{\directtextrulesparameter\c!location}\v!inmargin
-           {\llap
-              {\usetextrulesstyleandcolor\c!style\c!color
-               #1%
-               \kern\leftmargindistance}} % hskip
-           {\color[\directtextrulesparameter\c!rulecolor]
-              {\vrule
-                 \s!height\scratchheight
-                 \s!depth \scratchdepth
-                 \s!width \directtextrulesparameter\c!width}%
-            \hbox spread 2\dimexpr\directtextrulesparameter\c!distance\relax
-              {\hss
-               \usetextrulesstyleandcolor\c!style\c!color
-               \strut#1%
-               \hss}}}%
+      \ifempty{#1}%
+        % nothing
+      \orelse\ifcstok{\directtextrulesparameter\c!location}\v!inmargin
+        \llap
+          {\usetextrulesstyleandcolor\c!style\c!color
+           #1%
+           \kern\leftmargindistance}% hskip
+      \else
+        \color[\directtextrulesparameter\c!rulecolor]
+          {\vrule
+             \s!height\scratchheight
+             \s!depth \scratchdepth
+             \s!width \directtextrulesparameter\c!width}%
+        \hbox spread 2\dimexpr\directtextrulesparameter\c!distance\relax
+          {\hss
+           \usetextrulesstyleandcolor\c!style\c!color
+           \strut#1%
+           \hss}%
+      \fi
       \color[\directtextrulesparameter\c!rulecolor]
         {\leaders\hrule
            \s!height\scratchheight
@@ -674,9 +677,11 @@
   {\ifhmode
      \endgraf
    \fi
-   \doifelse{\directtextrulesparameter\c!depthcorrection}\v!on
+   \ifcstok{\directtextrulesparameter\c!depthcorrection}\v!on
      \pack_textrule_correct_depth_yes
+   \else
      \pack_textrule_correct_depth_nop
+   \fi
    \nointerlineskip
    \noindent\naturalvpack % was \dontleavehmode
      {\color[\directtextrulesparameter\c!rulecolor]
@@ -703,10 +708,11 @@
    \relax}
 
 \def\pack_textrule_following#1%
-  {\doifelsenothing{#1}
-     \pack_textrule_with_text_nop
-     \pack_textrule_with_text_yes
-     {#1}%
+  {\ifempty{#1}
+     \expandafter\pack_textrule_with_text_nop
+   \else
+     \expandafter\pack_textrule_with_text_yes
+   \fi{#1}%
    \ifvmode
      \prevdepth\zeropoint
    \fi}
@@ -767,7 +773,7 @@
 
 \def\pack_fillinrules_rule_indeed{\thinrules}
 
-\permanent\tolerant\protected\def\fillinrules[#1]#:#=#*#=%
+\permanent\tolerant\protected\def\fillinrules[#S#1]#:#=#*#=%
   {\endgraf
    \begingroup
    \setupcurrentfillinrules[#1]%
@@ -779,7 +785,7 @@
       \c!after=]%
    \scratchdistance\directfillinrulesparameter\c!distance\relax
    \noindent
-   \iftok{#2}\emptytoks\else
+   \ifempty{#2}\else
      \edef\p_width{\directfillinrulesparameter\c!width}%
      \ifx\p_width\v!fit
        \scratchdistance\zeropoint
@@ -800,7 +806,7 @@
    \setupwhitespace[\v!big]%
    \ignorespaces
    \pack_fillinrules_rule_indeed
-   \iftok{#3}\emptytoks\else
+   \ifempty{#3}\else
      \kern\scratchdistance
      \usefillinrulesstyleandcolor\c!style\c!color
      #3%
@@ -818,7 +824,7 @@
 %D
 %D \showsetup{fillintext}
 
-\permanent\tolerant\protected\def\fillintext[#1]#:#=#*#=%
+\permanent\tolerant\protected\def\fillintext[#S#1]#:#=#*#=%
   {\endgraf
    \begingroup
    \def\pack_fillinrules_rule_indeed{\unhbox\nextbox\unskip}% hm, needs checking
@@ -884,10 +890,10 @@
        \c!height=\scratchheight,
        \c!depth=\scratchheight]}%
    \frozen\advanceby\rightskip \directfillinlinesparameter\c!margin\relax
-   \frozen\parfillskip\zeropoint\relax
+   \frozen\parfillskip\zeroskip\relax
    \endgroup}
 
-\permanent\tolerant\protected\def\fillinline[#1]%
+\permanent\tolerant\protected\def\fillinline[#S#1]%
   {\dontleavehmode
    \registerparwrapper
      {fillinline}%

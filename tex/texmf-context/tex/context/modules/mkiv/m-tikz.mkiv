@@ -29,6 +29,11 @@
 
 \startmodule[tikz]
 
+\ifdefined\hoffset \else
+    \newdimen\hoffset
+    \newdimen\voffset
+\fi
+
 \ifdefined\pdflastxpos \else
     \unprotect
         \unexpanded\def\pdflastxpos{\numexpr\clf_lastxpos\relax}

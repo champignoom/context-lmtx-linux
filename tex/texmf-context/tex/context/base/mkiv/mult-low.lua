@@ -73,6 +73,7 @@ return {
         "atsignasciicode", "exclamationmarkasciicode", "questionmarkasciicode",
         "doublequoteasciicode", "singlequoteasciicode", "forwardslashasciicode",
         "primeasciicode", "hyphenasciicode", "percentasciicode", "leftbracketasciicode", "rightbracketasciicode",
+        "zeroasciicode", "nineasciicode", "alowercaseasciicode", "zlowercaseasciicode",
         --
         "hsizefrozenparcode", "skipfrozenparcode", "hangfrozenparcode", "indentfrozenparcode", "parfillfrozenparcode",
         "adjustfrozenparcode", "protrudefrozenparcode", "tolerancefrozenparcode", "stretchfrozenparcode",
@@ -80,7 +81,7 @@ return {
         "widowpenaltyfrozenparcode", "displaypenaltyfrozenparcode", "brokenpenaltyfrozenparcode",
         "demeritsfrozenparcode", "shapefrozenparcode", "linefrozenparcode", "hyphenationfrozenparcode",
         "shapingpenaltyfrozenparcode", "orphanpenaltyfrozenparcode", "allfrozenparcode",
-        "mathpenaltyfrozenparcode",
+        "emergencyfrozenparcode", "parpassesfrozenparcode", "singlelinepenaltyfrozenparcode",
         --
         "activemathcharcode",
         --
@@ -153,7 +154,7 @@ return {
         "startdocument", "stopdocument", "documentvariable", "unexpandeddocumentvariable", "setupdocument", "presetdocument",
         "doifelsedocumentvariable", "doifdocumentvariableelse", "doifdocumentvariable", "doifnotdocumentvariable",
         "startmodule", "stopmodule", "usemodule", "usetexmodule", "useluamodule","setupmodule","currentmoduleparameter","moduleparameter",
-        "everystarttext", "everystoptext",
+        "everystarttext", "everystoptext", "everyforgetall", "luaenvironment",
         --
         "startTEXpage", "stopTEXpage",
     --  "startMPpage", "stopMPpage", -- already catched by nested lexer
@@ -176,6 +177,7 @@ return {
         "mathalphacode", "mathboxcode", "mathchoicecode", "mathnothingcode", "mathlimopcode", "mathnolopcode",
         "mathunsetcode", "mathunspacedcode", "mathallcode", "mathfakecode", "mathunarycode",
         "mathmaybeordinarycode", "mathmayberelationcode", "mathmaybebinarycode", "mathnumbergroupcode",
+        "mathchemicalbondcode",
         --
         "constantnumber", "constantnumberargument", "constantdimen", "constantdimenargument", "constantemptyargument",
         --
@@ -193,7 +195,7 @@ return {
         --
         "Ux", "eUx",
         --
-        "parfillleftskip", "parfillrightskip",
+     -- "parfillleftskip", "parfillrightskip",
         --
         "startlmtxmode", "stoplmtxmode", "startmkivmode", "stopmkivmode",
         --
@@ -209,7 +211,7 @@ return {
         "breakafterdirnormalizecode", "removemarginkernsnormalizecode", "clipwidthnormalizecode", "flattendiscretionariesnormalizecode",
         "discardzerotabskipsnormalizecode", "flattenhleadersnormalizecode",
         --
-        "normalizeparnormalizeparcode", "flattenvleadersnormalizeparcode",
+        "normalizeparnormalizeparcode", "flattenvleadersnormalizeparcode", "limitprevgrafnormalizeparcode",
         --
         "nopreslackclassoptioncode", "nopostslackclassoptioncode",
         "lefttopkernclassoptioncode", "righttopkernclassoptioncode", "leftbottomkernclassoptioncode", "rightbottomkernclassoptioncode",
@@ -219,7 +221,8 @@ return {
         "flattenclassoptioncode", "omitpenaltyclassoptioncode", "unpackclassoptioncode", "raiseprimeclassoptioncode",
         "carryoverlefttopkernclassoptioncode", "carryoverleftbottomkernclassoptioncode", "carryoverrighttopkernclassoptioncode", "carryoverrightbottomkernclassoptioncode",
         "preferdelimiterdimensionsclassoptioncode", "autoinjectclassoptioncode", "removeitaliccorrectionclassoptioncode",
-        "operatoritaliccorrectionclassoptioncode",
+        "operatoritaliccorrectionclassoptioncode", "shortinlineclassoptioncode",
+        "pushnestingclassoptioncode", "popnestingclassoptioncode", "obeynestingclassoptioncode",
         --
         "noligaturingglyphoptioncode", "nokerningglyphoptioncode", "noleftligatureglyphoptioncode",
         "noleftkernglyphoptioncode", "norightligatureglyphoptioncode", "norightkernglyphoptioncode",
@@ -227,14 +230,22 @@ return {
         -- extras:
         "nokerningcode", "noligaturingcode",
         --
+        "indecentparpassclasses", "looseparpassclasses", "tightparpassclasses",
+        "verylooseparpassclass", "looseparpassclass", "semilooseparpassclass",
+        "decentparpassclass", "almostdecentparpassclasses",
+        "semitightparpassclass", "tightparpassclass",
+        --
         "frozenflagcode", "tolerantflagcode", "protectedflagcode", "primitiveflagcode", "permanentflagcode", "noalignedflagcode", "immutableflagcode",
         "mutableflagcode", "globalflagcode", "overloadedflagcode", "immediateflagcode", "conditionalflagcode", "valueflagcode", "instanceflagcode",
         --
         "ordmathflattencode", "binmathflattencode", "relmathflattencode", "punctmathflattencode", "innermathflattencode",
         --
         "normalworddiscoptioncode", "preworddiscoptioncode", "postworddiscoptioncode",
+        "preferbreakdiscoptioncode", "prefernobreakdiscoptioncode",
         --
         "continueifinputfile", "continuewhenlmtxmode", "continuewhenmkivmode",
+        --
+        "uunit"
     },
     ["helpers"] = {
         --
@@ -261,6 +272,7 @@ return {
         --
         "newcount", "newdimen", "newskip", "newmuskip", "newbox", "newtoks", "newread", "newwrite", "newmarks", "newinsert", "newattribute", "newif", "newfloat",
         "newlanguage", "newfamily", "newfam", "newhelp", -- not used
+        "newuserunit",
         --
         "newinteger", "newdimension", "newgluespec", "newmugluespec", "newposit",
         "aliasinteger", "aliasdimension", "aliasposit",
@@ -269,6 +281,8 @@ return {
         "begcsname",
         --
         "autorule",
+        --
+        "tobits", "tohexa",
         --
         "strippedcsname","checkedstrippedcsname",
         --
@@ -281,7 +295,7 @@ return {
         "sixthargumentfalse", "sixthargumenttrue",
         "seventhargumentfalse", "seventhargumenttrue",
         --
-        "vkern", "hkern", "vpenalty", "hpenalty",
+     -- "vkern", "hkern", "vpenalty", "hpenalty", -- native in mkxl
         --
         "doglobal", "dodoglobal", "redoglobal", "resetglobal",
         --
@@ -370,6 +384,7 @@ return {
         "scratchnx", "scratchny", "scratchmx", "scratchmy",
         "scratchunicode",
         "scratchmin", "scratchmax",
+        "scratchread", "scratchwrite",
         --
         "pfsin", "pfcos", "pftan", "pfasin", "pfacos", "pfatan", "pfsinh", "pfcosh", "pftanh", "pfasinh", "pfacosh", "pfatanh",
         "pfsqrt", "pflog", "pfexp", "pfceil", "pffloor", "pfround", "pfabs", "pfrad", "pfdeg", "pfatantwo", "pfpow", "pfmod", "pfrem",
@@ -404,7 +419,7 @@ return {
         "doifinstring", "doifnotinstring", "doifelseinstring", "doifinstringelse",
         "doifelseassignment", "doifassignmentelse", "docheckassignment", "doifelseassignmentcs", "doifassignmentelsecs",
         "validassignment", "novalidassignment",
-        "doiftext", "doifelsetext", "doiftextelse", "doifnottext",
+        "doiftext", "doifelsetext", "doiftextelse", "doifnottext", "validtext",
         --
         "quitcondition", "truecondition", "falsecondition",
         --
@@ -501,6 +516,7 @@ return {
         --
         "strut", "halfstrut", "quarterstrut", "depthstrut", "halflinestrut", "noheightstrut", "setstrut", "strutbox", "strutht", "strutdp", "strutwd", "struthtdp", "strutgap", "begstrut", "endstrut", "lineheight",
         "leftboundary", "rightboundary", "signalcharacter",
+        "ascender", "descender", "capheight",
         --
         "aligncontentleft", "aligncontentmiddle", "aligncontentright",
         --
@@ -579,11 +595,13 @@ return {
         "expdoifelsecommon", "expdoifcommonelse",
         "expdoifelseinset", "expdoifinsetelse",
         --
+        "glyphscaled",
+        --
         "ctxdirectlua", "ctxlatelua", "ctxsprint", "ctxwrite", "ctxcommand", "ctxdirectcommand", "ctxlatecommand", "ctxreport",
         "ctxlua", "luacode", "lateluacode", "directluacode",
         "registerctxluafile", "ctxloadluafile",
         "luaversion", "luamajorversion", "luaminorversion",
-        "ctxluacode", "luaconditional", "luaexpanded", "ctxluamatch",
+        "ctxluacode", "luaconditional", "luaexpanded", "ctxluamatch", "ctxluamatchfile",
         "startluaparameterset", "stopluaparameterset", "luaparameterset",
         "definenamedlua",
         "obeylualines", "obeyluatokens",
@@ -597,6 +615,7 @@ return {
         "freezeparagraphproperties", "defrostparagraphproperties",
         "setparagraphfreezing", "forgetparagraphfreezing",
         "updateparagraphproperties", "updateparagraphpenalties", "updateparagraphdemerits", "updateparagraphshapes", "updateparagraphlines",
+        "updateparagraphpasses",
         --
         "lastlinewidth",
         --
@@ -633,7 +652,7 @@ return {
         --
         "unsupportedcs",
         --
-        "openout", "closeout", "write", "openin", "closein", "read", "readline", "readfromterminal",
+        "openout", "closeout", "write", "openin", "closein", "read", "readline", "readlinedirect", "readfromterminal",
         --
         "boxlines", "boxline", "setboxline", "copyboxline",
         "boxlinewd","boxlineht", "boxlinedp",
@@ -668,6 +687,21 @@ return {
         "newlocalwrite", "newlocalread",
         "setnewlocalcount", "setnewlocaldimen", "setnewlocalskip", "setnewlocalmuskip", "setnewlocaltoks", "setnewlocalbox",
         --
-        "ifexpression"
+        "ifexpression",
+        --
+        "localcontrolledrepeating", "expandedrepeating", "unexpandedrepeating",
+        --
+        "lastchkinteger", "ifchkinteger",
+        --
+     -- "mathopen", "mathclose", "mathinner",
+        "mathordinary", "mathoperator", "mathbinary", "mathrelation", "mathpunctuation", "mathfraction",
+        "mathradical", "mathmiddle", "mathaccent", "mathfenced", "mathghost", "mathvariable", "mathactive",
+        "mathvcenter", "mathimaginary", "mathdifferential", "mathexponential", "mathdigit", "mathdivision",
+        "mathfactorial", "mathwrapped", "mathconstruct", "mathdimension", "mathunary", "mathchemicalbond",
+     -- "mathfunction", "mathexplicit", "mathbegin", "mathend",
+        --
+        "filebasename", "filenameonly", "filedirname", "filesuffix",
+        --
+        "setmathoption", "resetmathoption",
     }
 }

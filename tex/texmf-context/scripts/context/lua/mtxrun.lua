@@ -2141,7 +2141,7 @@ do -- create closure to overcome 200 locals limit
 
 package.loaded["l-table"] = package.loaded["l-table"] or true
 
--- original size: 41758, stripped down to: 22643
+-- original size: 42596, stripped down to: 23029
 
 if not modules then modules={} end modules ['l-table']={
  version=1.001,
@@ -2642,7 +2642,11 @@ local function do_serialize(root,name,depth,level,indexed)
    elseif tv=="number" then
     if tk=="number" then
      if hexify then
-      handle(format("%s [0x%X]=0x%X,",depth,k,v))
+      if accurate then
+       handle(format("%s [0x%X]=%q,",depth,k,v))
+      else
+       handle(format("%s [0x%X]=%s,",depth,k,v))
+      end
      elseif accurate then
       handle(format("%s [%s]=%q,",depth,k,v))
      else
@@ -2650,7 +2654,11 @@ local function do_serialize(root,name,depth,level,indexed)
      end
     elseif tk=="boolean" then
      if hexify then
-      handle(format("%s [%s]=0x%X,",depth,k and "true" or "false",v))
+      if accurate then
+       handle(format("%s [%s]=%q,",depth,k and "true" or "false",v))
+      else
+       handle(format("%s [%s]=%s,",depth,k and "true" or "false",v))
+      end
      elseif accurate then
       handle(format("%s [%s]=%q,",depth,k and "true" or "false",v))
      else
@@ -2659,7 +2667,11 @@ local function do_serialize(root,name,depth,level,indexed)
     elseif tk~="string" then
     elseif noquotes and not reserved[k] and lpegmatch(propername,k) then
      if hexify then
-      handle(format("%s %s=0x%X,",depth,k,v))
+      if accurate then
+       handle(format("%s %s=%q,",depth,k,v))
+      else
+       handle(format("%s %s=0x%X,",depth,k,v))
+      end
      elseif accurate then
       handle(format("%s %s=%q,",depth,k,v))
      else
@@ -2667,7 +2679,11 @@ local function do_serialize(root,name,depth,level,indexed)
      end
     else
      if hexify then
-      handle(format("%s [%q]=0x%X,",depth,k,v))
+      if accurate then
+       handle(format("%s [%q]=%q,",depth,k,v))
+      else
+       handle(format("%s [%q]=0x%X,",depth,k,v))
+      end
      elseif accurate then
       handle(format("%s [%q]=%q,",depth,k,v))
      else
@@ -6583,7 +6599,7 @@ do -- create closure to overcome 200 locals limit
 
 package.loaded["util-str"] = package.loaded["util-str"] or true
 
--- original size: 46322, stripped down to: 24128
+-- original size: 46912, stripped down to: 24470
 
 if not modules then modules={} end modules ['util-str']={
  version=1.001,
@@ -6777,6 +6793,7 @@ local p_prune_intospace=Cs (noleading*(notrailing+intospace+1     )^0 )
 local p_retain_normal=Cs ((normalline+normalempty )^0 )
 local p_retain_collapse=Cs ((normalline+doubleempty )^0 )
 local p_retain_noempty=Cs ((normalline+singleempty )^0 )
+local p_collapse_all=Cs (stripstart*(stripend+((whitespace+newline)^1/" ")+1)^0 )
 local striplinepatterns={
  ["prune"]=p_prune_normal,
  ["prune and collapse"]=p_prune_collapse,
@@ -6785,6 +6802,7 @@ local striplinepatterns={
  ["retain"]=p_retain_normal,
  ["retain and collapse"]=p_retain_collapse,
  ["retain and no empty"]=p_retain_noempty,
+ ["collapse all"]=p_collapse_all,
  ["collapse"]=patterns.collapser,
 }
 setmetatable(striplinepatterns,{ __index=function(t,k) return p_prune_collapse end })
@@ -7529,6 +7547,20 @@ do
  end })
  function string.wordsplitter(s)
   return cache[s]
+ end
+end
+if CONTEXTLMTXMODE and CONTEXTLMTXMODE>0 then
+ local t={
+  ["#"]="#H",
+  ["\n"]="#L",
+  ['"']="#Q",
+  ["\r"]="#R",
+  [" "]="#S",
+  ["\t"]="#T",
+  ["\\"]="#X",
+ }
+ function string.texhashed(s)
+  return (gsub(s,".",t))
  end
 end
 
@@ -9347,7 +9379,7 @@ do -- create closure to overcome 200 locals limit
 
 package.loaded["util-prs"] = package.loaded["util-prs"] or true
 
--- original size: 25716, stripped down to: 16805
+-- original size: 26298, stripped down to: 17137
 
 if not modules then modules={} end modules ['util-prs']={
  version=1.001,
@@ -9643,7 +9675,17 @@ hashes.settings_to_set=table.setmetatableindex(function(t,k)
  t[k]=v
  return v
 end)
-getmetatable(hashes.settings_to_set).__mode="kv" 
+function parsers.settings_to_set(str)
+ return str and lpegmatch(pattern,str) or {}
+end
+local pattern=Ct((C((1-S(", "))^1)*S(", ")^0)^1)
+hashes.settings_to_list=table.setmetatableindex(function(t,k) 
+ local v=k and lpegmatch(pattern,k) or {}
+ t[k]=v
+ return v
+end)
+getmetatable(hashes.settings_to_set ).__mode="kv" 
+getmetatable(hashes.settings_to_list).__mode="kv" 
 function parsers.simple_hash_to_string(h,separator)
  local t={}
  local tn=0
@@ -9665,7 +9707,7 @@ local splitter=lpeg.tsplitat(" ")
 function parsers.options_to_array(str)
  return str and lpegmatch(splitter,str) or {}
 end
-local value=P(lbrace*C((nobrace+nestedbraces)^0)*rbrace)+C(digit^1*lparent*(noparent+nestedparents)^1*rparent)+C((nestedbraces+(1-comma))^1)
+local value=P(lbrace*C((nobrace+nestedbraces)^0)*rbrace)+C(digit^1*lparent*(noparent+nestedparents)^1*rparent)+C((nestedbraces+(1-comma))^1)+Cc("") 
 local pattern_a=spaces*Ct(value*(separator*value)^0)
 local function repeater(n,str)
  if not n then
@@ -9687,7 +9729,7 @@ local function repeater(n,str)
   end
  end
 end
-local value=P(lbrace*C((nobrace+nestedbraces)^0)*rbrace)+(C(digit^1)/tonumber*lparent*Cs((noparent+nestedparents)^1)*rparent)/repeater+C((nestedbraces+(1-comma))^1)
+local value=P(lbrace*C((nobrace+nestedbraces)^0)*rbrace)+(C(digit^1)/tonumber*lparent*Cs((noparent+nestedparents)^1)*rparent)/repeater+C((nestedbraces+(1-comma))^1)+Cc("") 
 local pattern_b=spaces*Ct(value*(separator*value)^0)
 function parsers.settings_to_array_with_repeat(str,expand) 
  if expand then
@@ -11901,7 +11943,7 @@ do -- create closure to overcome 200 locals limit
 
 package.loaded["util-soc-imp-http"] = package.loaded["util-soc-imp-http"] or true
 
--- original size: 12624, stripped down to: 9598
+-- original size: 12772, stripped down to: 9619
 
 
 local tostring,tonumber,setmetatable,next,type=tostring,tonumber,setmetatable,next,type
@@ -12227,6 +12269,7 @@ trequest=function(originalrequest)
  local code,status=connection:receivestatusline()
  if not code then
   connection:receive09body(status,request.sink,request.step)
+  connection:close()
   return 1,200
  end
  while code==100 do
@@ -13265,7 +13308,7 @@ do -- create closure to overcome 200 locals limit
 
 package.loaded["trac-log"] = package.loaded["trac-log"] or true
 
--- original size: 16017, stripped down to: 11045
+-- original size: 16040, stripped down to: 11066
 
 if not modules then modules={} end modules ['trac-log']={
  version=1.001,
@@ -13280,6 +13323,7 @@ local concat,insert,remove=table.concat,table.insert,table.remove
 local topattern=string.topattern
 local utfchar=utf.char
 local datetime=os.date
+local sleep=os.sleep
 local openfile=io.open
 local write_nl=print
 local write=io.write
@@ -14154,7 +14198,7 @@ do -- create closure to overcome 200 locals limit
 
 package.loaded["util-lua"] = package.loaded["util-lua"] or true
 
--- original size: 7149, stripped down to: 4997
+-- original size: 7166, stripped down to: 5009
 
 if not modules then modules={} end modules ['util-lua']={
  version=1.001,
@@ -14188,6 +14232,7 @@ luautilities.suffixes={
  tma="tma",
  tmc=(CONTEXTLMTXMODE and CONTEXTLMTXMODE>0 and "tmd") or (jit and "tmb") or "tmc",
  lua="lua",
+ lmt="lmt",
  luc=(CONTEXTLMTXMODE and CONTEXTLMTXMODE>0 and "lud") or (jit and "lub") or "luc",
  lui="lui",
  luv="luv",
@@ -15496,7 +15541,7 @@ do -- create closure to overcome 200 locals limit
 
 package.loaded["util-env"] = package.loaded["util-env"] or true
 
--- original size: 9738, stripped down to: 5531
+-- original size: 9750, stripped down to: 5538
 
 if not modules then modules={} end modules ['util-env']={
  version=1.001,
@@ -15604,7 +15649,8 @@ function environment.setargument(name,value)
  environment.arguments[name]=value
 end
 function environment.getargument(name,partial)
- local arguments,sortedflags=environment.arguments,environment.sortedflags
+ local arguments=environment.arguments
+ local sortedflags=environment.sortedflags
  if arguments[name] then
   return arguments[name]
  elseif partial then
@@ -15876,7 +15922,7 @@ do -- create closure to overcome 200 locals limit
 
 package.loaded["util-zip"] = package.loaded["util-zip"] or true
 
--- original size: 32353, stripped down to: 16001
+-- original size: 33051, stripped down to: 16324
 
 if not modules then modules={} end modules ['util-zip']={
  version=1.001,
@@ -16301,8 +16347,10 @@ if xzip then
    closezip(zipf)
   end
  end
- local function unzipdir(zipname,path,verbose)
+ local function unzipdir(zipname,path,verbose,collect,validate)
   if type(zipname)=="table" then
+   validate=zipname.validate
+   collect=zipname.collect
    verbose=zipname.verbose
    path=zipname.path
    zipname=zipname.zipname
@@ -16323,34 +16371,47 @@ if xzip then
     local done=0
     local steps=verbose=="steps"
     local time=steps and osclock()
+    if collect then
+     collect={}
+    else
+     collect=false
+    end
     for i=1,count do
      local l=list[i]
      local n=l.filename
-     local d=unzipfile(z,n) 
-     if d then
-      local p=filejoin(path,n)
-      if mkdirs(dirname(p)) then
-       if steps then
-        total=total+#d
-        done=done+1
-        if done>=step then
-         done=0
-         logwriter(format("%4i files of %4i done, %10i bytes, %0.3f seconds",i,count,total,osclock()-time))
+     if not validate or validate(n) then
+      local d=unzipfile(z,n) 
+      if d then
+       local p=filejoin(path,n)
+       if mkdirs(dirname(p)) then
+        if steps then
+         total=total+#d
+         done=done+1
+         if done>=step then
+          done=0
+          logwriter(format("%4i files of %4i done, %10i bytes, %0.3f seconds",i,count,total,osclock()-time))
+         end
+        elseif verbose then
+         logwriter(n)
         end
-       elseif verbose then
-        logwriter(n)
+        savedata(p,d)
+        if collect then
+         collect[#collect+1]=p
+        end
        end
-       savedata(p,d)
+      else
+       logwriter(format("problem with file %s",n))
       end
      else
-      logwriter(format("problem with file %s",n))
      end
     end
     if steps then
      logwriter(format("%4i files of %4i done, %10i bytes, %0.3f seconds",count,count,total,osclock()-time))
     end
     closezipfile(z)
-    return true
+    if collect then
+     return collect
+    end
    else
     closezipfile(z)
    end
@@ -17969,7 +18030,7 @@ do -- create closure to overcome 200 locals limit
 
 package.loaded["lxml-lpt"] = package.loaded["lxml-lpt"] or true
 
--- original size: 54589, stripped down to: 31258
+-- original size: 54738, stripped down to: 31395
 
 if not modules then modules={} end modules ['lxml-lpt']={
  version=1.001,
@@ -18973,9 +19034,11 @@ expressions.print=function(...)
  print(...)
  return true
 end
-expressions.find=find
-expressions.upper=upper
-expressions.lower=lower
+expressions.find=function(str,...)
+ return str and find(str,...)
+end
+expressions.upper=function(str) return str and upper(str) or "" end 
+expressions.lower=function(str) return str and lower(str) or "" end 
 expressions.number=tonumber
 expressions.boolean=toboolean
 function expressions.contains(str,pattern)
@@ -21509,7 +21572,7 @@ do -- create closure to overcome 200 locals limit
 
 package.loaded["data-env"] = package.loaded["data-env"] or true
 
--- original size: 9501, stripped down to: 6413
+-- original size: 9758, stripped down to: 6523
 
 if not modules then modules={} end modules ['data-env']={
  version=1.001,
@@ -21523,6 +21586,7 @@ local next,rawget=next,rawget
 local resolvers=resolvers
 local allocate=utilities.storage.allocate
 local setmetatableindex=table.setmetatableindex
+local sortedhash=table.sortedhash
 local suffixonly=file.suffixonly
 local formats=allocate()
 local suffixes=allocate()
@@ -21624,7 +21688,7 @@ local relations=allocate {
   lua={
    names={ "lua" },
    variable='LUAINPUTS',
-   suffixes={ luasuffixes.lua,luasuffixes.luc,luasuffixes.tma,luasuffixes.tmc },
+   suffixes={ luasuffixes.lmt,luasuffixes.lua,luasuffixes.luc,luasuffixes.tma,luasuffixes.tmc },
    usertype=true,
   },
   lib={
@@ -21725,8 +21789,8 @@ local relations=allocate {
 }
 resolvers.relations=relations
 function resolvers.updaterelations()
- for category,categories in next,relations do
-  for name,relation in next,categories do
+ for category,categories in sortedhash(relations) do
+  for name,relation in sortedhash(categories) do
    local rn=relation.names
    local rv=relation.variable
    if rn and rv then
@@ -21739,7 +21803,9 @@ function resolvers.updaterelations()
       suffixes[rni]=rs
       for i=1,#rs do
        local rsi=rs[i]
-       suffixmap[rsi]=rni
+       if not suffixmap[rsi] then
+        suffixmap[rsi]=rni
+       end
       end
      end
     end
@@ -22331,7 +22397,7 @@ do -- create closure to overcome 200 locals limit
 
 package.loaded["data-res"] = package.loaded["data-res"] or true
 
--- original size: 70711, stripped down to: 44839
+-- original size: 70775, stripped down to: 44854
 
 if not modules then modules={} end modules ['data-res']={
  version=1.001,
@@ -23248,7 +23314,7 @@ end
 local preparetreepattern=Cs((P(".")/"%%."+P("-")/"%%-"+P(1))^0*Cc("$"))
 local collect_instance_files
 local function find_analyze(filename,askedformat,allresults)
- local filetype=''
+ local filetype=""
  local filesuffix=suffixonly(filename)
  local wantedfiles={}
  wantedfiles[#wantedfiles+1]=filename
@@ -23256,7 +23322,7 @@ local function find_analyze(filename,askedformat,allresults)
   if filesuffix=="" or not suffixmap[filesuffix] then
    local defaultsuffixes=resolvers.defaultsuffixes
    for i=1,#defaultsuffixes do
-    local forcedname=filename..'.'..defaultsuffixes[i]
+    local forcedname=filename.."."..defaultsuffixes[i]
     wantedfiles[#wantedfiles+1]=forcedname
     filetype=formatofsuffix(forcedname)
     if trace_locating then
@@ -23600,7 +23666,8 @@ collect_instance_files=function(filename,askedformat,allresults)
   local result={}
   local status={}
   local done={}
-  for k,r in next,results do
+  for k=1,#results do
+   local r=results[k]
    local method,list=r[1],r[2]
    if method and list then
     for i=1,#list do
@@ -26188,8 +26255,8 @@ end -- of closure
 
 -- used libraries    : l-bit32.lua l-lua.lua l-macro.lua l-sandbox.lua l-package.lua l-lpeg.lua l-function.lua l-string.lua l-table.lua l-io.lua l-number.lua l-set.lua l-os.lua l-file.lua l-gzip.lua l-md5.lua l-sha.lua l-url.lua l-dir.lua l-boolean.lua l-unicode.lua l-math.lua util-str.lua util-tab.lua util-fil.lua util-sac.lua util-sto.lua util-prs.lua util-fmt.lua util-soc-imp-reset.lua util-soc-imp-socket.lua util-soc-imp-copas.lua util-soc-imp-ltn12.lua util-soc-imp-mime.lua util-soc-imp-url.lua util-soc-imp-headers.lua util-soc-imp-tp.lua util-soc-imp-http.lua util-soc-imp-ftp.lua util-soc-imp-smtp.lua trac-set.lua trac-log.lua trac-inf.lua trac-pro.lua util-lua.lua util-deb.lua util-tpl.lua util-sbx.lua util-mrg.lua util-env.lua luat-env.lua util-zip.lua lxml-tab.lua lxml-lpt.lua lxml-mis.lua lxml-aux.lua lxml-xml.lua trac-xml.lua data-ini.lua data-exp.lua data-env.lua data-tmp.lua data-met.lua data-res.lua data-pre.lua data-inp.lua data-out.lua data-fil.lua data-con.lua data-use.lua data-zip.lua data-tre.lua data-sch.lua data-lua.lua data-aux.lua data-tmf.lua data-lst.lua libs-ini.lua luat-sta.lua luat-fmt.lua
 -- skipped libraries : -
--- original bytes    : 1046208
--- stripped bytes    : 415601
+-- original bytes    : 1049586
+-- stripped bytes    : 417273
 
 -- end library merge
 

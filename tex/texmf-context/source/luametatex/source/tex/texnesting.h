@@ -29,6 +29,8 @@ typedef struct list_state_record {
     halfword math_begin;           // singleword 
     halfword math_end;             // singleword 
     halfword math_mode;            // singleword 
+    halfword tolerance;
+    halfword pretolerance;
 } list_state_record;
 
 typedef struct nest_state_info {
@@ -48,6 +50,7 @@ extern void        tex_initialize_nest_state (void);
 extern void        tex_initialize_nesting    (void);
 extern void        tex_push_nest             (void);
 extern void        tex_pop_nest              (void);
+extern void        tex_tail_prepend          (halfword p);
 extern void        tex_tail_append           (halfword p);
 extern void        tex_tail_append_list      (halfword p);
 extern halfword    tex_pop_tail              (void);

@@ -373,7 +373,7 @@ local tochar = {
     [ 3] = "$",
     [ 4] = "&",
     [ 5] = "\n",
-    [ 6] = "#",
+    [ 6] = "#", -- todo
     [ 7] = "^",
     [ 8] = "_",
     [10] = " ",
@@ -677,7 +677,9 @@ local function runbuffer(name,encapsulate,runnername,suffixes)
         content = "empty buffer"
     end
     if encapsulate then
-        content = formatters["\\starttext\n%s\n\\stoptext\n"](content)
+        if not find(content,"\\starttext") then
+            content = formatters["\\starttext\n%s\n\\stoptext\n"](content)
+        end
     end
     --
     local hash = md5hex(content)
@@ -828,7 +830,7 @@ end
 
 -- moved here:
 
-function buffers.samplefile(name)
+function buffers.samplefile(name,before,after,inbetween)
     if not exists(name) then
         assign(name,io.loaddata(resolvers.findfile(name)))
     end
@@ -837,8 +839,35 @@ end
 
 implement {
     name      = "samplefile", -- bad name, maybe rename to injectbuffercontent
+    public    = true,
+    protected = true,
     actions   = buffers.samplefile,
     arguments = "string"
+}
+
+function buffers.splitsamplefile(name,before,after,inbetween)
+    local data  = io.loaddata(resolvers.findfile(name)) or ""
+    local split = string.split(utilities.strings.striplines(data,"prune and collapse"),lpeg.patterns.whitespace^1)
+    local size  = #split
+    local before = tonumber(before) or 1
+    local after  = tonumber(after) or 1
+    if before + after < size then
+        table.move(split,size-after,size,before+1)
+        if inbetween and inbetween ~= "" then
+            split[before+1] = inbetween
+        end
+        data = concat(split, " ",1,before+after+1)
+    end
+    assign(name,data)
+    getbuffer(name)
+end
+
+implement {
+    name      = "splitsamplefile", -- bad name, maybe rename to injectbuffercontent
+    public    = true,
+    protected = true,
+    actions   = buffers.splitsamplefile,
+    arguments = "4 strings",
 }
 
 -- A somewhat strange place (for now) so the *.log definitions might move someplace

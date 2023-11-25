@@ -224,7 +224,7 @@ void tex_initialize_nesting(void)
     cur_list.delimiter = null;
     cur_list.prev_graf = 0;
     cur_list.mode_line = 0;
-    cur_list.prev_depth = ignore_depth; /*tex |ignore_depth_criterium_par| is not yet available! */
+    cur_list.prev_depth = ignore_depth; /*tex |ignore_depth_criterion_par| is not yet available! */
     cur_list.space_factor = default_space_factor;
     cur_list.incomplete_noad = null;
     cur_list.direction_stack = null;
@@ -337,7 +337,7 @@ void tex_show_activities(void)
                     while (r != page_insert_head) {
                         halfword index = insert_index(r);
                         halfword multiplier = tex_get_insert_multiplier(index);
-                        halfword size = multiplier == 1000 ? insert_total_height(r) : tex_x_over_n(insert_total_height(r), 1000) * multiplier;
+                        halfword size = multiplier == scaling_factor ? insert_total_height(r) : tex_x_over_n(insert_total_height(r), scaling_factor) * multiplier;
                         if (node_type(r) == split_node && node_subtype(r) == insert_split_subtype) {
                             halfword q = page_head;
                             halfword n = 0;
@@ -367,7 +367,7 @@ void tex_show_activities(void)
             case vmode:
             case internal_vmode:
                 {
-                    if (n.prev_depth <= ignore_depth_criterium_par) {
+                    if (n.prev_depth <= ignore_depth_criterion_par) {
                         tex_print_format("%l[prevdepth ignored");
                     } else {
                         tex_print_format("%l[prevdepth %D", n.prev_depth, pt_unit);
@@ -402,6 +402,15 @@ int tex_vmode_nest_index(void)
     return p;
 }
 
+void tex_tail_prepend(halfword n) 
+{
+    tex_couple_nodes(node_prev(cur_list.tail), n);
+    tex_couple_nodes(n, cur_list.tail);
+    if (cur_list.tail == cur_list.head) {
+        cur_list.head = n;
+    }
+}
+
 void tex_tail_append(halfword p)
 {
     node_next(cur_list.tail) = p;
@@ -415,3 +424,4 @@ void tex_tail_append_list(halfword p)
     node_prev(p) = cur_list.tail;
     cur_list.tail = tex_tail_of_node_list(p);
 }
+

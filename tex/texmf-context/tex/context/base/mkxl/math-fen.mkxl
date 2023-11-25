@@ -56,6 +56,7 @@
    \c!distance=\zerocount,
    \c!topspace=\zeropoint,
    \c!bottomspace=\zeropoint,
+   \c!overflow=\v!no,
    \c!factor=\v!auto]
 
 \appendtoks
@@ -96,8 +97,8 @@
 
 % todo : class -> number
 
-\newconditional\c_math_fenced_mirror \settrue \c_math_fenced_mirror
-\newconditional\c_math_fenced_sized  \setfalse\c_math_fenced_sized
+\newconditional\c_math_fenced_mirror \c_math_fenced_mirror\conditionaltrue
+\newconditional\c_math_fenced_sized  \c_math_fenced_sized\conditionalfalse
 \newinteger    \c_math_fence_nesting
 
 \installcorenamespace {mathfencesize}
@@ -151,19 +152,23 @@
 \newconstant\c_math_fenced_class
 \newinteger \c_math_fence_check
 
+\integerdef\c_math_factor_fenced\zerocount
+
+\installglobalmacrostack\c_math_factor_fenced
+
 \protected\def\math_fenced_common#1#2#3#4% \Uwhatever class symbol source
   {\c_math_fenced_class\math_class_by_parameter\mathfenceparameter#2%
    \math_fenced_check_size_mismatch % we need to catch an unbalanced \F as we are sequential
    \ifconditional\c_math_fenced_sized
    \orelse\ifconditional\c_math_fenced_level_mode
      \ifnum\c_math_fenced_class=\mathopencode
-     % \hpack{\infofont<L:\number\c_math_fenced_level:\number\c_attr_mathsize>}%
+     % \hpack{\infofont<L:\the\c_math_fenced_level:\the\c_attr_mathsize>}%
        \integerdef\c_math_fenced_stack\c_attr_mathsize
        \push_macro_c_math_fenced_stack
      \orelse\ifnum\c_math_fenced_class=\mathclosecode
        \pop_macro_c_math_fenced_stack
        \c_attr_mathsize\c_math_fenced_stack
-     % \hpack{\infofont<R:\number\c_math_fenced_level:\number\c_attr_mathsize>}%
+     % \hpack{\infofont<R:\the\c_math_fenced_level:\the\c_attr_mathsize>}%
      \fi
    \fi
    \edef\p_fence{#3}%
@@ -171,8 +176,18 @@
      \ifnum\c_math_fenced_class=\mathmiddlecode\else#1.\relax\fi
    \else
      \edef\p_factor   {\mathfenceparameter\c!factor}%
+     \edef\p_overflow {\mathfenceparameter\c!overflow}%
      \edef\p_size     {\mathfenceparameter\c!size}%
      \edef\p_mathclass{\mathfenceparameter\c!mathclass}%
+     \edef\p_inline_factor{\ifconditional\indisplaymath\mathfenceparameter\c!displayfactor\else\mathfenceparameter\c!inlinefactor\fi}%
+     \ifempty\p_inline_factor
+       % nothing
+     \orelse\ifx#1\Uleft
+       \push_macro_c_math_factor_fenced
+       \integerdef\c_math_factor_fenced\p_inline_factor\relax
+     \orelse\ifx#1\Uright
+       \pop_macro_c_math_factor_fenced
+     \fi
      \ifnum\c_math_fenced_level>\zerocount
        \math_fenced_common_factor_fixed
      \orelse\ifconditional\c_math_fenced_sized
@@ -182,18 +197,18 @@
          \Uvextensible
        \else
          #1% \Uleft \Umiddle \Uleft
-         \ifx#1\Umiddle
+         \ifx#1\Umiddle \ifx\p_overflow\v!no
            nooverflow %
-         \fi
+         \fi \fi
        \fi
      \orelse\ifx\p_factor\v!auto
        \ifconditional\c_math_fenced_level_mode
          \Uvextensible
        \else
          #1% \Uleft \Umiddle \Uleft
-        \ifx#1\Umiddle
+        \ifx#1\Umiddle\ifx\p_overflow\v!no
           nooverflow %
-        \fi
+        \fi \fi
        \fi
      \orelse\ifx\p_factor\v!none
        \math_fenced_common_factor_none
@@ -219,11 +234,15 @@
      \s!top    \mathfenceparameter\c!topspace
      \s!bottom \mathfenceparameter\c!bottomspace
      %
+     \ifzero\c_math_factor_fenced\else
+         \s!factor \c_math_factor_fenced
+     \fi
+     %
      \math_fenced_trace
      \ifx\p_fence\v!none
        \Udelimiter\mathghostcode\fam\zerocount
-     \orelse\ifchknum\p_fence\or
-       \Udelimiter\mathghostcode\fam\p_fence
+     \orelse\ifchknumber\p_fence\or
+       \Udelimiter\mathghostcode\fam\lastchknumber
      \else
        \p_fence
      \fi
@@ -246,9 +265,9 @@
   {\math_fenced_common\Umiddle\c!middleclass\math_fenced_p_middle\c!middlesource}
 
 \def\math_fenced_middle_sized
-  {\settrue\c_math_fenced_sized
+  {\c_math_fenced_sized\conditionaltrue
    \math_fenced_middle_normal
-   \setfalse\c_math_fenced_sized}
+   \c_math_fenced_sized\conditionalfalse}
 
 \appendtoks
     \let\math_fenced_middle\math_fenced_middle_normal
@@ -319,12 +338,12 @@
 \protected\def\math_fenced_fenced_start#1%
   {\begingroup
  %{\beginmathgroup
-   \edef\currentmathfence{#1}%
+   \cdef\currentmathfence{#1}%
    \math_fenced_fenced_common
    \math_fenced_left}
 
 \protected\def\math_fenced_fenced_stop#1%
-  {\edef\currentmathfence{#1}%
+  {\cdef\currentmathfence{#1}%
    \math_fenced_right
    \stopusemathstyleparameter
    \endgroup}
@@ -340,7 +359,7 @@
 % \definemathfence [tupdownarrows] [text] [\c!left="2191,\c!right="2193]
 
 \def\math_fenced_check#1%
-  {\iftok{\mathfenceparameter#1}\emptytoks\letmathfenceparameter#1\v!none\fi}
+  {\ifempty{\mathfenceparameter#1}\letmathfenceparameter#1\v!none\fi}
 
 \appendtoks
     \math_fenced_check\c!left
@@ -363,10 +382,10 @@
    \s!source     \numexpr\namedboxanchor{\mathfenceparameter#4}\relax
    \Udelimiter\mathghostcode\fam\p_fence}
 
-\tolerant\protected\def\math_fenced_horizontal#1#*[#2]#:#*#3#4%
+\tolerant\protected\def\math_fenced_horizontal#1#*[#S#2]#:#*#3#4%
   {% \csname math\mathfenceparameter\c!mathclass\endcsname
    \mathord \bgroup % class here
-     \setlocalmathfencecurrent{#1}% \edef\currentmathfence{#1}%
+     \setlocalmathfencecurrent{#1}% \cdef\currentmathfence{#1}%
      \setupcurrentmathfence[#2]%
    % \usemathstyleparameter\mathfenceparameter\c!mathstyle
      \setmathsmalltextbox\scratchboxone\hbox{\usemathfencestyleandcolor\c!leftstyle \c!leftcolor #3}%
@@ -404,12 +423,12 @@
    \c!define=\v!yes,
    \c!distance=.125\emwidth]
 
-\tolerant\protected\def\math_fenced_vertical#1#*[#2]%
+\tolerant\protected\def\math_fenced_vertical#1#*[#S#2]%
   {\begingroup
  %{\beginmathgroup
-   \setlocalmathfencecurrent{#1}% \edef\currentmathfence{#1}%
+   \setlocalmathfencecurrent{#1}% \cdef\currentmathfence{#1}%
    % under test:
-   \setfalse\c_math_fenced_level_mode
+   \c_math_fenced_level_mode\conditionalfalse
    \c_attr_mathsize\attributeunsetvalue
    %
    \resetmathfenceparameter\c!size
@@ -434,24 +453,24 @@
 
 \protected\def\math_fenced_fenced_indeed_fixed#1%
   {\math_fenced_force_size\bigmathdelimitervariant\p_size
-   \settrue\c_math_fenced_sized
+   \c_math_fenced_sized\conditionaltrue
    \math_fenced_left
-   \setfalse\c_math_fenced_sized
+   \c_math_fenced_sized\conditionalfalse
    \let\math_fenced_middle\math_fenced_middle_sized
  % \enforced\let\middle\math_fenced_middle_sized
 \begingroup
    #1% otherwise middle interferes
 \endgroup
-   \settrue\c_math_fenced_sized
+   \c_math_fenced_sized\conditionaltrue
    \math_fenced_right
-   \setfalse\c_math_fenced_sized
+   \c_math_fenced_sized\conditionalfalse
    \math_fenced_fenced_indeed_finish}
 
 \protected\def\math_fenced_fenced_indeed_adapt#1%
-  {\setfalse\c_math_fenced_sized
+  {\c_math_fenced_sized\conditionalfalse
    \math_fenced_left
    #1%
-   \setfalse\c_math_fenced_sized
+   \c_math_fenced_sized\conditionalfalse
    \math_fenced_right
    \math_fenced_fenced_indeed_finish}
 
@@ -462,9 +481,9 @@
     \enforced\let\fenced\math_fenced_direct
 \to \everymathematics
 
-\permanent\tolerant\protected\def\startmathfenced[#1]#*[#2]%
+\permanent\tolerant\protected\def\startmathfenced[#1]#*[#S#2]%
   {\begingroup
-   \def\currentmathfence{#1}%
+   \cdef\currentmathfence{#1}%
    \setupcurrentmathfence[#2]%
    \math_fenced_fenced_start{#1}}
 
@@ -564,7 +583,7 @@
 \def\math_fenced_check_size_mismatch
  {\ifnum\c_math_fence_check=\c_math_fence_nesting
     \c_attr_mathsize\attributeunsetvalue
-    \setfalse\c_math_fenced_level_mode
+    \c_math_fenced_level_mode\conditionalfalse
     \c_math_fenced_level\zerocount
   \fi}
 
@@ -572,7 +591,7 @@
   {\ifconditional\c_math_fenced_level_mode\else
      \c_math_fence_check\c_math_fence_nesting
    \fi
-   \settrue\c_math_fenced_level_mode
+   \c_math_fenced_level_mode\conditionaltrue
    \ifchknum#1\or
      \c_math_fenced_level#1\relax
    \orelse\ifcsname\??fencelevels#1\endcsname
@@ -751,7 +770,7 @@
 
 % \let\leftorright\relax
 
-\newconditional\c_math_fenced_unknown  \settrue\c_math_fenced_unknown
+\newconditional\c_math_fenced_unknown  \c_math_fenced_unknown\conditionaltrue
 
 % \permanent\protected\def\installmathfencepair#1#2#3#4%
 %   {\letcsname\??mathleft \normalmeaningless#1\endcsname#2%
@@ -1074,13 +1093,13 @@
 
 \permanent\protected\def\enableautofences
   {\clf_enableautofences
-   \setfalse\c_math_fences_auto
+   \c_math_fences_auto\conditionalfalse
    \glet\clf_enableautofences\relax % onlyonce anyway
-   \enforced\permanent\protected\gdef\enableautofences{\settrue\c_math_fences_auto}%
+   \enforced\permanent\protected\gdef\enableautofences{\c_math_fences_auto\conditionaltrue}%
    \enableautofences}
 
 \permanent\protected\def\disableautofences
-  {\setfalse\c_math_fences_auto}
+  {\c_math_fences_auto\conditionalfalse}
 
 \permanent\protected\def\math_fences_used_left
   {\ifconditional\c_math_fences_auto
@@ -1172,7 +1191,7 @@
           \s!yoffset -.1\exheight
           \s!target \registeredboxanchor
           \s!to \zeropoint
-          {\darkblue\hss\mathindexfont\ruledhbox{\number\c_math_fence_nesting}\hss}%
+          {\darkblue\hss\mathindexfont\ruledhbox{\the\c_math_fence_nesting}\hss}%
    \endlocalcontrol
    \s!source \registeredboxanchor
    }
@@ -1189,7 +1208,7 @@
 %           \s!yoffset -.1\exheight
 %           \s!target \registeredboxanchor
 %           \s!to \zeropoint
-%           {\darkblue\hss\mathindexfont\ruledhbox{\number\c_math_fence_nesting B}\hss}%
+%           {\darkblue\hss\mathindexfont\ruledhbox{\the\c_math_fence_nesting B}\hss}%
 %      \registeranchorbox
 %        \registeredboxanchor
 %        \plusone
@@ -1198,7 +1217,7 @@
 %           \s!yoffset .1\exheight
 %           \s!target \registeredboxanchor
 %           \s!to \zeropoint
-%           {\darkgreen\hss\mathindexfont\ruledhbox{\number\c_math_fence_nesting T}\hss}%
+%           {\darkgreen\hss\mathindexfont\ruledhbox{\the\c_math_fence_nesting T}\hss}%
 %      \registeranchorbox
 %        \registeredboxanchor
 %        \plusone
@@ -1207,7 +1226,7 @@
 %           \s!xoffset -.1\emwidth
 %           \s!target \registeredboxanchor
 %           \s!to \zeropoint
-%           {\darkred\hss\mathindexfont\ruledhbox{\number\c_math_fence_nesting L}}%
+%           {\darkred\hss\mathindexfont\ruledhbox{\the\c_math_fence_nesting L}}%
 %      \registeranchorbox
 %        \registeredboxanchor
 %        \plusone
@@ -1216,7 +1235,7 @@
 %           \s!xoffset .1\emwidth
 %           \s!target \registeredboxanchor
 %           \s!to \zeropoint
-%           {\darkyellow\mathindexfont\ruledhbox{\number\c_math_fence_nesting R}\hss}%
+%           {\darkyellow\mathindexfont\ruledhbox{\the\c_math_fence_nesting R}\hss}%
 %    \endlocalcontrol
 %    \s!source \registeredboxanchor
 %    }

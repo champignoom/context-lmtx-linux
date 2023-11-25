@@ -579,6 +579,7 @@ local function copytotfm(data)
         parameters.designsize = (metadata.designsize or 10)*65536
         parameters.ascender   = abs(metadata.ascender  or 0)
         parameters.descender  = abs(metadata.descender or 0)
+        parameters.capheight  = abs(metadata.capheight or 0)
         parameters.units      = 1000
         --
         properties.spacer   = spacer
@@ -712,7 +713,7 @@ local function read_from_afm(specification)
     if tfmdata then
         tfmdata.properties.name = specification.name
         tfmdata.properties.id   = specification.id
-        tfmdata = constructors.scale(tfmdata, specification)
+        tfmdata = constructors.scale(tfmdata,specification)
         local allfeatures = tfmdata.shared.features or specification.features.normal
         constructors.applymanipulators("afm",tfmdata,allfeatures,trace_features,report_afm)
         fonts.loggers.register(tfmdata,'afm',specification)

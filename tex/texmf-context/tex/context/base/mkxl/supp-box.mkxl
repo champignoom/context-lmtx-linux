@@ -34,6 +34,12 @@
 \newdimension\lastnaturalboxht
 \newdimension\lastnaturalboxdp
 
+\pushoverloadmode
+    \newuserunit\strutht   sh
+    \newuserunit\strutdp   sd
+    \newuserunit\struthtdp st
+\popoverloadmode
+
 \registerctxluafile{supp-box}{autosuffix}
 
 % \fixupboxesmode\plusone % gone: is now the default
@@ -531,6 +537,16 @@
 %D \doiftext     {data} {then branch}
 %D \stoptyping
 
+% performance:
+%
+% \ifcondition\validtext {...}T\else F\fi   4.47
+% \doifelsetext          {...}{T}{F}        4.91
+% \iftext                {...}T\else F\fi   5.01
+%
+% \ifcondition\validtext {}T\else F\fi      0.22
+% \doifelsetext          {}{T}{F}           1.02
+% \iftext                {}T\else F\fi      0.39
+
 \permanent\protected\def\doifelsetext#1%
   {\begingroup
    \setbox\scratchbox\hbox % no \hpack because we can have fallbacks
@@ -553,9 +569,23 @@
      \endgroup\expandafter\firstofoneargument
    \fi}
 
-% more efficient but maybe fragile:
-%
-%       \nospacing#1}%
+\permanent\protected\def\validtext#1%
+  {\ifparameter#1\or
+     \begingroup
+     \setbox\scratchbox\hbox % no \hpack because we can have fallbacks
+       {\settrialtypesetting
+        \ignorespaces#1\removeunwantedspaces}%
+     \normalexpanded{\endgroup\noexpand\expandafter\ifzeropt\wd\scratchbox\if_false\else\if_true\fi}%
+   \else
+     \expandafter\if_false
+   \fi}
+
+% \iftext{xx}     YES\else NOP\fi
+% \iftext{}       YES\else NOP\fi
+% \iftext{\strut} YES\else NOP\fi
+% \iftext{ }      YES\else NOP\fi
+
+% more efficient but maybe fragile: \nospacing#1
 
 \aliased\let\doiftextelse\doifelsetext
 
@@ -860,8 +890,8 @@
 \newbox      \newshapebox
 \newbox      \oldshapebox
 \newbox      \tmpshapebox
-\newinteger \shapecounter
-\newevery   \everyshapebox \relax
+\newinteger  \shapecounter
+\newevery    \everyshapebox \relax
 
 \permanent\dimensiondef\shapesignal.12345678pt % or 12345sp
 
@@ -932,7 +962,7 @@
   {\setbox\oldshapebox\vbox
      \bgroup
      \reshapingboxtrue
-     \the\everyshapebox
+     \expand\everyshapebox
      \insertshapesignal}
 
 \permanent\protected\def\endofshapebox
@@ -1017,7 +1047,7 @@
 %D depth of the line.
 
 \permanent\protected\def\shapedhbox % lines with non strutted dimensions have
-  {\expanded{\dowithnextbox         % interlineskip so if we want the original
+  {\normalexpanded{\dowithnextbox         % interlineskip so if we want the original
      {\ht\nextbox\the\ht\shapebox   % spacing, we need to preserve the original
       \dp\nextbox\the\dp\shapebox   % height and depth which is definitely
       \box\nextbox}}                % needed if we apply struts to the 'new'
@@ -1682,7 +1712,7 @@
 \newdimension\vboxtohboxslack
 \newdimension\hboxestohboxslack
 
-%D Create line and fake height of paragraph by messign with heights: a nice hack by
+%D Create line and fake height of paragraph by messing with heights: a nice hack by
 %D DEK himself.
 
 %\protected\def\setvboxtohbox
@@ -1780,7 +1810,10 @@
 %D   {unhhbox}
 %D
 %D The next macro is used in typesetting inline headings. Let's first look at the
-%D macro and then show an example.
+%D macro and then show an example. As many other helpers here, it is no longer
+%D used in the core and dates from \MKII\ times, but we keep it here just in case
+%D some use style uses it. Eventually we might moev this to a load|-|on|-|demand
+%D module.
 
 \newbox      \unhhedbox
 \newbox      \hhbox
@@ -2122,7 +2155,7 @@
       \futurelet\nexttoken\dodocommand}%
    \def\dodocommand
      {\ifx\nexttoken\bgroup
-        \expanded{\egroup#1 to \the\sizeofbox}%
+        \normalexpanded{\egroup#1 to \the\sizeofbox}%
       \else
         \expandafter\afterassignment\expandafter\docommand\expandafter\scratchdimen
       \fi}%
@@ -2446,18 +2479,18 @@
 
 \protected\def\syst_boxes_stack_allocate
   {\newbox\b_syst_boxes_stack
-   \letcsname\??boxstack\number\c_syst_boxes_stack\endcsname\b_syst_boxes_stack}
+   \letcsname\??boxstack\the\c_syst_boxes_stack\endcsname\b_syst_boxes_stack}
 
 \protected\def\syst_boxes_push#1#2%
   {\global\advanceby\c_syst_boxes_stack\plusone
-   \expandafter\let\expandafter\b_syst_boxes_stack\csname\??boxstack\number\c_syst_boxes_stack\endcsname
+   \expandafter\let\expandafter\b_syst_boxes_stack\csname\??boxstack\the\c_syst_boxes_stack\endcsname
    \ifrelax\b_syst_boxes_stack % cheaper then csname check as in most cases it's defined
       \syst_boxes_stack_allocate
    \fi
    #1\setbox\b_syst_boxes_stack\box#2\relax}
 
 \protected\def\syst_boxes_pop#1#2%
-  {#1\setbox#2\box\csname\??boxstack\number\c_syst_boxes_stack\endcsname
+  {#1\setbox#2\box\csname\??boxstack\the\c_syst_boxes_stack\endcsname
    \global\advanceby\c_syst_boxes_stack\minusone}
 
 \permanent\protected\def\localpushbox {\syst_boxes_push\relax}
@@ -2740,7 +2773,7 @@
 \appendtoks
     \permanent\def\prerolltostring
       {\beginlocalcontrol\begingroup
-       \the\everypreroll
+       \expand\everypreroll
        \dowithnextboxcs\syst_boxes_contenttostring\hbox}
 \to \everydump
 
@@ -2944,6 +2977,97 @@
 %         \namedboxanchor{#1}%
 %         \ifcstok{#2}\v!before\minusone\else\plusone\fi
 %         \box\nextbox}}
+
+%D \macros{doifelseindented}
+%D
+%D This test macro is defined at the \LUA\ end:
+%D
+%D \startbuffer
+%D test \doifelseindented{yes}{nop} test\par
+%D \setupindenting[3em] \indenting[yes]
+%D test \doifelseindented{yes}{nop} test\par
+%D \stopbuffer
+%D
+%D \typebuffer \blank \startpacked \getbuffer \stoppacked \blank
+
+% \definedasluacommand\noflinesinbox
+
+%D \macros{boxfixstretch}
+%D
+%D This is relative new one and a wrapper around \typ {\boxlimitate} but with a
+%D criterium.
+%D
+%D \startbuffer
+%D \setbox2\copy0 \boxfixstretch 20pt      2 \box2
+%D \setbox2\copy0 \boxfixstretch 30pt      2 \box2
+%D \setbox2\copy0 \boxfixstretch 40pt      2 \box2
+%D \setbox2\copy0 \boxfixstretch  0pt      2 \box2 % \boxlimitate 2 0pt
+%D \setbox2\copy0 \boxfixstretch \maxdimen 2 \box2
+%D \stopbuffer
+%D
+%D \setbox0\ruledvbox to 2cm \bgroup
+%D     test\vskip10pt plus 10pt minus 5pt\relax test%
+%D \egroup
+%D
+%D \startlinecorrection
+%D \getbuffer
+%D \stoplinecorrection
+%D
+%D \setbox0\ruledhbox to 3cm \bgroup
+%D     test\hskip10pt plus 10pt minus 5pt\relax test%
+%D \egroup \getbuffer
+%D
+%D \startlinecorrection
+%D \getbuffer
+%D \stoplinecorrection
+
+\newconditional\boxstretchfixed
+\newdimension  \boxstretchdelta
+
+\permanent\protected\def\boxfixstretch
+  {\begingroup
+   \afterassignment\syst_boxes_fixstretch_a\scratchdimen}
+
+\permanent\protected\def\syst_boxes_fixstretch_a
+  {\afterassignment\syst_boxes_fixstretch_b\scratchcounter}
+
+\permanent\protected\def\syst_boxes_fixstretch_b
+  {\scratchdimenone  \ifvbox\scratchcounter\ht\else\wd\fi\scratchcounter % current size
+   \scratchdimentwo  \boxrepack\scratchcounter                           % natural
+   \scratchdimenthree\boxstretch\scratchcounter                          % stretch
+   \scratchdistance  \dimexpr\scratchdimenone-\scratchdimentwo\relax
+   % if size - natural > stretch
+   \unless\ifdim\scratchdistance>\scratchdimenthree
+     % we don't stretch beyond what is acceptable
+     \global\boxstretchfixed\conditionalfalse
+     \global\boxstretchdelta\zeropoint
+   \orelse\ifdim\scratchdistance>\scratchdimen
+     % we are below the criterium
+     \boxlimitate\scratchcounter\zerocount
+     \global\boxstretchfixed\conditionaltrue
+     \global\boxstretchdelta\dimexpr\ifvbox\scratchcounter\ht\else\wd\fi\scratchcounter-\boxrepack\scratchcounter\relax
+   \else
+     % we are above the criterium
+     \global\boxstretchfixed\conditionalfalse
+     \global\boxstretchdelta\zeropoint
+   \fi
+% \writestatus{PAGE}{stretch:#L
+%   size \the\scratchdimenone,#L
+%   natural \the\scratchdimentwo,#L
+%   stretch \the\scratchdimenthree,#L
+%   distance \the\scratchdistance,#L
+%   criterium \the\scratchdimen,#L
+%   fixed case
+%    \unless\ifdim\scratchdistance>\scratchdimenthree
+%      1:false,#L
+%    \orelse\ifdim\scratchdistance<\scratchdimen
+%      2:true,#L
+%    \else
+%      4:false,#L
+%    \fi
+%    delta \the\boxstretchdelta
+% }%
+   \endgroup}
 
 \protect \endinput
 

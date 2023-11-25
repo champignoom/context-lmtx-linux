@@ -66,7 +66,7 @@
   {\normalexpanded
      {\lang_labels_define_class_indeed
         {#1}%
-        {\ifchknum#2\or#2\else\zerocount\fi}%
+        {\ifchknumber#2\or#2\else\zerocount\fi}% not \lastchknumber as we need expansion
         \expandafter\noexpand\csname lang_labels_#1_text_1\endcsname
         \expandafter\noexpand\csname            #1language\endcsname
         \expandafter\noexpand\csname lang_labels_#1_text_2\endcsname
@@ -182,11 +182,11 @@
 
 \tolerant\def\lang_labels_text_prefix_start[#1]#*[#2]#*[#3]% class language name
   {\ifarguments\or\or
-     \edef\currenttextprefixtag{\reallanguagetag\currentmainlanguage}%
-     \edef\currenttextprefixname{#2}%
+     \cdef\currenttextprefixtag{\reallanguagetag\currentmainlanguage}%
+     \cdef\currenttextprefixname{#2}%
    \else
-     \edef\currenttextprefixtag{\reallanguagetag{#2}}%
-     \edef\currenttextprefixname{#3}%
+     \cdef\currenttextprefixtag{\reallanguagetag{#2}}%
+     \cdef\currenttextprefixname{#3}%
    \fi
    \grabuntil{stop#1text}\lang_labels_text_prefix_start_indeed}
 
@@ -195,10 +195,10 @@
 
 \tolerant\def\lang_labels_text_prefix_setup[#1]#*[#2]%
   {\ifarguments\or
-     \edef\currenttextprefixtag{\reallanguagetag\currentmainlanguage}%
+     \cdef\currenttextprefixtag{\reallanguagetag\currentmainlanguage}%
      \processcommalist[#1]\lang_labels_text_prefix_setup_indeed
    \else
-     \edef\currenttextprefixtag{\reallanguagetag{#1}}%
+     \cdef\currenttextprefixtag{\reallanguagetag{#1}}%
      \processcommalist[#2]\lang_labels_text_prefix_setup_indeed
    \fi}
 
@@ -253,10 +253,10 @@
 
 \tolerant\def\lang_labels_text_prefix_copy[#1]#*[#2]%
   {\ifarguments\or
-     \edef\currenttextprefixtag{\reallanguagetag\currentmainlanguage}%
+     \cdef\currenttextprefixtag{\reallanguagetag\currentmainlanguage}%
      \processcommalist[#1]\lang_labels_text_prefix_copy_indeed
    \else
-     \edef\currenttextprefixtag{\reallanguagetag{#1}}%
+     \cdef\currenttextprefixtag{\reallanguagetag{#1}}%
      \processcommalist[#2]\lang_labels_text_prefix_copy_indeed
    \fi}
 

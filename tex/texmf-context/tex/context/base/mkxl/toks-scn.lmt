@@ -44,6 +44,7 @@ local scangluespec        = scanners.gluespec
 local scancsname          = scanners.csname
 local scanintegerargument = scanners.integerargument
 local scandimenargument   = scanners.dimenargument
+local scandetokened       = scanners.detokened
 
 local todimen             = number.todimen
 local toboolean           = toboolean
@@ -213,6 +214,8 @@ scanners.bracketedasis   = scanbracketedasis
 scanners.argumentasis    = scanargumentasis
 scanners.csnameunchecked = scancsnameunchecked
 
+--------.detokenize      = function() return scanners.tokenstring(false) end -- needs testing
+
 local shortcuts = {
     tokens              = tokens,
     bits                = tokenbits,
@@ -221,6 +224,8 @@ local shortcuts = {
     scanners            = scanners,
     scanstring          = scanstring,
     scanargument        = scanargument,
+    scantokenstring     = scanners.tokenstring,
+ -- scandetokenize      = scanners.detokenize,
     scanverbatim        = scanverbatim,
     scantokenlist       = scantokenlist,
     scantoks            = scantoks,
@@ -258,6 +263,7 @@ local shortcuts = {
     scanargumentasis    = scanargumentasis,
     scanintegerargument = scanintegerargument,
     scandimenargument   = scandimenargument,
+    scandetokened       = scandetokened,
     todimen             = todimen,
     tonumber            = tonumber,
     tostring            = tostring,

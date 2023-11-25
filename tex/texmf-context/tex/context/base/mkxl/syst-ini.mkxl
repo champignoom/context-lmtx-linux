@@ -141,6 +141,8 @@
 \immutable\integerdef\hyphenasciicode          45
 \immutable\integerdef\periodasciicode          46
 \immutable\integerdef\forwardslashasciicode    47 % /
+\immutable\integerdef\zeroasciicode            48
+\immutable\integerdef\nineasciicode            57
 \immutable\integerdef\colonasciicode           58
 \immutable\integerdef\semicolonasciicode       59
 \immutable\integerdef\lessthanasciicode        60 % < used as alternative verbatim {
@@ -152,6 +154,8 @@
 \immutable\integerdef\rightbracketasciicode    93
 \immutable\integerdef\circumflexasciicode      94
 \immutable\integerdef\underscoreasciicode      95
+\immutable\integerdef\alowercaseasciicode      97
+\immutable\integerdef\zlowercaseasciicode     122
 \immutable\integerdef\leftbraceasciicode      123 % `\{
 \immutable\integerdef\barasciicode            124 % `\|
 \immutable\integerdef\rightbraceasciicode     125 % `\}
@@ -314,10 +318,10 @@
 \permanent\countdef\c_syst_min_allocated_attribute = 207 \c_syst_min_allocated_attribute =  1024 % 0-1023 : private
 \permanent\countdef\c_syst_max_allocated_attribute = 208 \c_syst_min_allocated_attribute = \directlua{tex.write(tex.magicconstants.max_attribute_register_index)} % 65535 % no allocator, managed differently
 
-\permanent\countdef\c_syst_max_allocated_count     = 211 \c_syst_max_allocated_count     = \directlua{tex.write(tex.magicconstants.max_int_register_index)}       % 65535 % is adapted later on
-\permanent\countdef\c_syst_max_allocated_dimen     = 212 \c_syst_max_allocated_dimen     = \directlua{tex.write(tex.magicconstants.max_dimen_register_index)}     % idem
+\permanent\countdef\c_syst_max_allocated_count     = 211 \c_syst_max_allocated_count     = \directlua{tex.write(tex.magicconstants.max_integer_register_index)}   % 65535 % is adapted later on
+\permanent\countdef\c_syst_max_allocated_dimen     = 212 \c_syst_max_allocated_dimen     = \directlua{tex.write(tex.magicconstants.max_dimension_register_index)} % idem
 \permanent\countdef\c_syst_max_allocated_skip      = 213 \c_syst_max_allocated_skip      = \directlua{tex.write(tex.magicconstants.max_glue_register_index)}      % idem
-\permanent\countdef\c_syst_max_allocated_muskip    = 214 \c_syst_max_allocated_muskip    = \directlua{tex.write(tex.magicconstants.max_mu_glue_register_index)}   % idem
+\permanent\countdef\c_syst_max_allocated_muskip    = 214 \c_syst_max_allocated_muskip    = \directlua{tex.write(tex.magicconstants.max_muglue_register_index)}    % idem
 \permanent\countdef\c_syst_max_allocated_box       = 215 \c_syst_max_allocated_box       = \directlua{tex.write(tex.magicconstants.max_box_register_index)}       % idem
 \permanent\countdef\c_syst_max_allocated_toks      = 216 \c_syst_max_allocated_toks      = \directlua{tex.write(tex.magicconstants.max_toks_register_index)}      % idem
 \permanent\countdef\c_syst_max_allocated_read      = 217 \c_syst_max_allocated_read      = \c_syst_max_allocated_iohandle
@@ -805,10 +809,10 @@
 
 %D Constants to be used with \type {\interactionmode}.
 
-\immutable\integerdef\batchmodecode     \zerocount
-\immutable\integerdef\nonstopmodecode   \plusone
-\immutable\integerdef\scrollmodecode    \plustwo
-\immutable\integerdef\errorstopmodecode \plusthree
+% \immutable\integerdef\batchmodecode     \zerocount
+% \immutable\integerdef\nonstopmodecode   \plusone
+% \immutable\integerdef\scrollmodecode    \plustwo
+% \immutable\integerdef\errorstopmodecode \plusthree
 
 %D Of course we want even bigger log files, so we copied this from the \ETEX\
 %D source files.
@@ -887,8 +891,8 @@
 %D This is only used when we load \CONTEXT. Nesting is not supported here.
 
 \permanent\def\pushoverloadmode
-  {\enforced\permanent\protected\edef\popoverloadmode{\overloadmode\the\overloadmode\enforced\let\popoverloadmode\relax}%
-   \overloadmode\zerocount}
+  {\enforced\permanent\protected\edef\popoverloadmode{\normaloverloadmode\the\normaloverloadmode\enforced\let\popoverloadmode\relax}%
+   \normaloverloadmode\zerocount}
 
 \aliased\let\popoverloadmode\relax
 
@@ -933,7 +937,7 @@
 %D \type{\setfalse}:
 %D
 %D \starttyping
-%D \settrue\doublesided
+%D \doublesided\conditionaltrue
 %D \setfalse
 %D \stoptyping
 %D while testing is accomplished by:
@@ -1169,11 +1173,11 @@
 
 %D Sometimes kerns make more sense than glue but we need to be in the right mode:
 
-\permanent\protected\def\vkern   {\ifhmode\par           \fi\kern}
-\permanent\protected\def\hkern   {\ifvmode\dontleavehmode\fi\kern}
+\ifdefined\vkern    \else \permanent\protected\def\vkern   {\ifhmode\par           \fi\kern}    \fi
+\ifdefined\hkern    \else \permanent\protected\def\hkern   {\ifvmode\dontleavehmode\fi\kern}    \fi
 
-\permanent\protected\def\vpenalty{\ifhmode\par           \fi\penalty}
-\permanent\protected\def\hpenalty{\ifvmode\dontleavehmode\fi\penalty}
+\ifdefined\vpenalty \else \permanent\protected\def\vpenalty{\ifhmode\par           \fi\penalty} \fi
+\ifdefined\hpenalty \else \permanent\protected\def\hpenalty{\ifvmode\dontleavehmode\fi\penalty} \fi
 
 %D Again a few kind-of-extensions the core. These come from plain \TEX\ but are
 %D probably not used in \CONTEXT.
@@ -1248,7 +1252,7 @@
 
 \newcount\c_syst_helpers_n_of_namespaces \c_syst_helpers_n_of_namespaces\pluseight % 1-8 reserved for catcodes
 
-\def\v_interfaces_prefix_template_system{\number    \c_syst_helpers_n_of_namespaces>>}
+\def\v_interfaces_prefix_template_system{\the       \c_syst_helpers_n_of_namespaces>>}
 %def\v_interfaces_prefix_template_system{\characters\c_syst_helpers_n_of_namespaces>>} % no \characters yet
 
 \protected\def\installsystemnamespace#1% will be redefined
@@ -1485,10 +1489,30 @@
 
 \let\ifexpression\ifnumexpression
 
-%D This will be default:
+%D So we register implicit (newline) pars. When we set bit 2 and define a macro
+%D with \type {\par} as delimiter, an explicit \par is expected and newline pars
+%D are then part of the argument.
 
-\autoparagraphmode\plusone  % we need at least 1 in order to be able to switch to 2
-%autoparagraphmode\plustwo  % because we define two \par delimited macros
+% newline :
+%     bit 1: text
+%         set  : <end_paragraph_cmd,new_line_end_paragraph_code>
+%         unset: par_loc
+%     bit 2: macro
+%         set  : par_command_match
+%         unset: use token
+%     bit 3: go on
+%         set  : don't increment loc
+%         unset: increment loc
+%
+%     default:
+%         inject : par_loc
+%         macro  : use token
+%         input  : increment loc
+%
+%     only      bit 1 set: macros work with \par as normal
+%     when also bit 2 set: embedded empty lines grabbed too
+
+\autoparagraphmode\plusone
 
 %D The same values apply as \type {\shownodedetails}. When set the box is shown in
 %D the the log file but that is pretty slow when we have much detail.
@@ -1502,5 +1526,50 @@
 %D Catch
 
 \ifdefined\mathpunctuation \else \let\mathpunctuation\mathpunct \fi % fixed in 2.10.06
+
+%D We keep this for a while (suggested correction by KB):
+
+\ifdefined\linebreakcriterion   \aliased\let\linebreakcriterium  \linebreakcriterion   \fi
+\ifdefined\ignoredepthcriterion \aliased\let\ignoredepthcriterium\ignoredepthcriterion \fi
+
+%D Special purpose:
+
+\permanent\protected\def\if_false{\iffalse}
+\permanent\protected\def\if_true {\iftrue}
+
+%D Pseudo primitives:
+
+\permanent\untraced\def\localcontrolledrepeating{\localcontrolledrepeat\maxcount}
+\permanent\untraced\def\expandedrepeating       {\expandedrepeat       \maxcount}
+\permanent\untraced\def\unexpandedrepeating     {\unexpandedrepeat     \maxcount}
+
+\aliased\let\lastchkinteger\lastchknumber
+\aliased\let\ifchkinteger  \ifchknumber
+
+%D Let's be neat:
+
+\permanent\untraced\def\userunitcode#1#2%
+  {\numexpr(`#1-\alowercaseasciicode)*26+(`#2-\alowercaseasciicode)\relax}
+
+\permanent\protected\def\newuserunit#1#2#3%
+  {\associateunit#1=\numexpr(`#2-\alowercaseasciicode)*26+(`#3-\alowercaseasciicode)\relax}
+
+\newdimension\piunit \piunit 3.1415926535898pt % 205887sp % for Mikael
+\newdimension\ftunit \ftunit 12in              % foot     % for Alan
+\newdimension\uunit  \uunit  1cm
+
+\newuserunit \piunit pi
+\newuserunit \ftunit ft
+\newuserunit \uunit  uu
+
+%D We enable special escapes:
+
+\parametermode \plusone
+
+%D While the buildbot is down:
+
+\ifdefined\protecteddetokenize\else
+    \aliased\let\protecteddetokenize\detokenize
+\fi
 
 \protect \endinput

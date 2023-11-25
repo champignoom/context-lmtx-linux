@@ -124,7 +124,7 @@ local pdf_v = 0
 local need_tm, need_tf, need_font, cur_tmrx, cur_factor
 local need_width, need_mode, done_width, done_mode
 local mode
-local f_pdf_cur, f_pdf, fs_cur, fs, f_cur, f_x_scale, f_y_scale
+local f_pdf_cur, f_pdf, fs_cur, fs, fu, f_cur, f_x_scale, f_y_scale
 local tj_delta, cw
 local usedfonts, usedxforms, usedximages, usedxgroups
 local getxformname, getximagename
@@ -132,7 +132,7 @@ local boundingbox, shippingmode, objectnumber
 local tmrx, tmry, tmsx, tmsy, tmtx, tmty
 ----- cmrx, cmry, cmsx, cmsy, cmtx, cmty
 local cmrx, cmry,             cmtx, cmty
-local tmef
+local tmef, tmef_f_x_scale
 local c_effect
 
 local function usefont(t,k) -- a bit redundant hash
@@ -143,41 +143,43 @@ local function usefont(t,k) -- a bit redundant hash
 end
 
 local function reset_variables(specification)
-    pdf_h, pdf_v  = 0, 0
-    cmrx, cmry    = 1.0, 1.0
- -- cmsx, cmsy    = 0.0, 0.0
-    cmtx, cmty    = 0.0, 0.0
-    tmrx, tmry    = 1.0, 1.0
-    tmsx, tmsy    = 0.0, 0.0
-    tmtx, tmty    = 0.0, 0.0
-    tmef          = 1.0
-    need_tm       = false
-    need_tf       = false
-    need_font     = true
-    need_width    = 0
-    need_mode     = 0
-    done_width    = false
-    done_mode     = false
-    mode          = "page"
-    shippingmode  = specification.shippingmode
-    objectnumber  = specification.objectnumber
-    cur_tmrx      = 0.0
-    f_cur         = 0
-    f_pdf_cur     = 0 -- nullfont
-    f_pdf         = 0 -- nullfont
-    fs_cur        = 0
-    fs            = 0
-    f_x_scale     = 1.0
-    f_y_scale     = 1.0
-    cur_factor    = 0
-    tj_delta      = 0.0
-    cw            = 0.0
-    c_effect      = nil
-    usedfonts     = setmetatableindex(usefont)
-    usedxforms    = { }
-    usedximages   = { }
- -- usedxgroups   = { }
-    boundingbox   = specification.boundingbox
+    pdf_h, pdf_v   = 0, 0
+    cmrx, cmry     = 1.0, 1.0
+ -- cmsx, cmsy     = 0.0, 0.0
+    cmtx, cmty     = 0.0, 0.0
+    tmrx, tmry     = 1.0, 1.0
+    tmsx, tmsy     = 0.0, 0.0
+    tmtx, tmty     = 0.0, 0.0
+    tmef           = 1.0
+    need_tm        = false
+    need_tf        = false
+    need_font      = true
+    need_width     = 0
+    need_mode      = 0
+    done_width     = false
+    done_mode      = false
+    mode           = "page"
+    shippingmode   = specification.shippingmode
+    objectnumber   = specification.objectnumber
+    cur_tmrx       = 0.0
+    f_cur          = 0
+    f_pdf_cur      = 0 -- nullfont
+    f_pdf          = 0 -- nullfont
+    fs_cur         = 0
+    fs             = 0
+    fu             = 1
+    f_x_scale      = 1.0
+    f_y_scale      = 1.0
+    cur_factor     = 0
+    tj_delta       = 0.0
+    cw             = 0.0
+    c_effect       = nil
+    tmef_f_x_scale = 1
+    usedfonts      = setmetatableindex(usefont)
+    usedxforms     = { }
+    usedximages    = { }
+ -- usedxgroups    = { }
+    boundingbox    = specification.boundingbox
 end
 
 -- buffer
@@ -581,21 +583,25 @@ do
         cw         = 0
         --
         fs = fontparameters.size * bpfactor
+        fu = 1
         if collapse then
             local sc = fs / 10
             -- kind of special:
             if format == "opentype" or format == "type1" then
-                sc = sc * 1000 / fontparameters.units -- can we avoid this ?
+                sc = sc * 1000 / fontparameters.units
+                fu = fontparameters.units / 1000
             end
             --
             fs = 10
             --
+            tmsy = tmsy * sc
             tmrx = tmrx * sc
             tmry = tmry * sc
         else
             -- kind of special:
             if format == "opentype" or format == "type1" then
-                fs = fs * 1000 / fontparameters.units -- can we avoid this ?
+                fs = fs * 1000 / fontparameters.units
+                fu = fontparameters.units / 1000
             end
         end
         --
@@ -605,7 +611,13 @@ do
         end
         f_y_scale = sy
         if f_y_scale ~= 1.0 then
+            tmsy = tmsy * f_y_scale
             tmry = tmry * f_y_scale
+        end
+        --
+        tmef_f_x_scale = tmef * f_x_scale
+        if tmef_f_x_scale == 1.0 then
+            tmef_f_x_scale = 1
         end
         --
         characterwidth   = characterwidths[font]
@@ -720,7 +732,6 @@ do
 
         local effect = data.effect
 
-     -- if sx ~= f_x_scale or sy ~= f_y_scale or need_tf or font ~= f_cur or f_pdf ~= f_pdf_cur or fs ~= fs_cur then
         if sx ~= f_x_scale or sy ~= f_y_scale or need_tf or font ~= f_cur or f_pdf ~= f_pdf_cur or fs ~= fs_cur
             or mode == "page"
             or effect ~= c_effect
@@ -737,7 +748,8 @@ do
         end
 
         if x then
-            pos_h = pos_h + x * tmef * f_x_scale
+         -- pos_h = pos_h + x * tmef * f_x_scale
+            pos_h = pos_h + x * tmef_f_x_scale
         end
         if y then
             pos_v = pos_v + y * f_y_scale
@@ -768,7 +780,6 @@ do
                     end
                 end
             end
-
             if hshift then pos_h = pos_h + hshift end
             if vshift then pos_v = pos_v - vshift end
             if need_tm then
@@ -778,7 +789,8 @@ do
                 move = calc_pdfpos(pos_h,pos_v)
             end
             if move then
-                local d = tj_delta * scalefactor / (tmef * f_x_scale)
+             -- local d = fu * tj_delta * scalefactor / (tmef * f_x_scale)
+                local d = fu * tj_delta * scalefactor / tmef_f_x_scale -- 'fu' for Adobe_Naskh.ttf
                 if d <= -0.5 or d >= 0.5 then
                     if mode == "char" then
                         end_charmode()
@@ -800,7 +812,8 @@ do
             begin_charmode()
         end
 
-        cw = cw + characterwidth[char] * tmef * f_x_scale
+     -- cw = cw + characterwidth[char] * tmef * f_x_scale
+        cw = cw + characterwidth[char] * tmef_f_x_scale
 
         local slot = pdfcharacters[data.index or char] -- registers usage
 

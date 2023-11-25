@@ -78,6 +78,11 @@
     2.10.00 : a few days before the ctx 2022 meeting (starting September 19)
     2.10.01 : mid October 2022 (some more upgrades of the math engine) 
     2.10.05 : late January 2023 
+    2.10.07 : around TeXLive 2023
+    2.10.08 : close to BachoTeX 2023 
+    2.10.09 : evolved in May/June 2023 (math & text linebreak experiments) 
+
+    2.11.00 : maybe around the ctx 2023 meeting 
 
     At some point the \CONTEXT\ group will be responsible for guaranteeing that the official version
     is what comes with \CONTEXT\ and that long term support and stabilty is guaranteed and that no 
@@ -90,9 +95,10 @@
 # include "tex/textypes.h"
 
 # define luametatex_version          210
-# define luametatex_revision         9
-# define luametatex_version_string   "2.10.09"
-# define luametatex_development_id   20230508
+# define luametatex_revision         10
+# define luametatex_release          11
+# define luametatex_version_string   "2.10.11"
+# define luametatex_development_id   20230918
 
 # define luametatex_name_camelcase   "LuaMetaTeX"
 # define luametatex_name_lowercase   "luametatex"
@@ -111,13 +117,18 @@
 typedef struct version_state_info {
     int         version;
     int         revision;
+    int         release; 
+    int         developmentid;
     const char *verbose;
     const char *banner;
     const char *compiler;
- // const char *libc;
-    int         developmentid;
-    int         formatid;
     const char *copyright;
+    int         formatid;
+    int         luaversionmajor;
+    int         luaversionminor;
+    int         luaversionrelease;
+    double      luatexversion;
+    double      luaversion;
 } version_state_info;
 
 extern version_state_info lmt_version_state;
@@ -143,6 +154,7 @@ extern version_state_info lmt_version_state;
 # include <time.h>
 # include <signal.h>
 # include <sys/stat.h>
+# include <stdbool.h>
 
 # ifdef _WIN32
     # include <windows.h>

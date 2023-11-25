@@ -1,4 +1,4 @@
-.TH "mtx-context" "1" "01-01-2023" "version 1.04" "ConTeXt Process Management"
+.TH "mtx-context" "1" "01-01-2023" "version 1.05" "ConTeXt Process Management"
 .SH NAME
  mtx-context - ConTeXt Process Management
 .SH SYNOPSIS
@@ -154,6 +154,9 @@ assume given file present elsewhere
 .TP
 .B --nofile
 use dummy file as jobname
+.TP
+.B --forceinput
+use this file as input file instead of the given one
 .SH OPTIONS: EXPERT
 .TP
 .B --touch
@@ -210,6 +213,12 @@ process file with texexec
 .TP
 .B --pipe
 do not check for file and enter scroll mode (--dummyfile=whatever.tmp)
+.TP
+.B --parallel
+process multiple files at the same time (you can specify a number of processes, default: 8)
+.TP
+.B --parallellist
+process commands in this file (lines that start with 'context')
 .TP
 .B --sandbox
 process file in a limited environment

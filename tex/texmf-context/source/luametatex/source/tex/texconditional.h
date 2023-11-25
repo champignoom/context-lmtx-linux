@@ -55,12 +55,15 @@ typedef enum if_test_codes {
     if_int_code,            /*tex |\ifnum| */
     if_abs_int_code,        /*tex |\ifabsnum| */ 
     if_zero_int_code,       /*tex |\ifzeronum|*/
+    if_interval_int_code,
     if_posit_code,    
     if_abs_posit_code,
     if_zero_posit_code,
+    if_interval_posit_code,
     if_dim_code,            /*tex |\ifdim| */
     if_abs_dim_code,        /*tex |\ifabsdim| */
     if_zero_dim_code,       /*tex |\ifzerodim| */
+    if_interval_dim_code,
     if_odd_code,            /*tex |\ifodd| */
     if_vmode_code,          /*tex |\ifvmode| */
     if_hmode_code,          /*tex |\ifhmode| */
@@ -83,14 +86,14 @@ typedef enum if_test_codes {
     if_val_dim_code,        /*tex |\ifdimval| */
     if_cmp_dim_code,        /*tex |\ifcmpdim| */
     if_case_code,           /*tex |\ifcase| */
-    if_def_code,            /*tex |\ifdefined| */
-    if_cs_code,             /*tex |\ifcsname| */
+    if_defined_code,        /*tex |\ifdefined| */
+    if_csname_code,         /*tex |\ifcsname| */
     if_in_csname_code,      /*tex |\ifincsname| */
     if_font_char_code,      /*tex |\iffontchar| */
     if_condition_code,      /*tex |\ifcondition| */
     if_flags_code,          /*tex |\ifflags| */
-    if_empty_cmd_code,      /*tex |\ifempty| */
-    if_relax_cmd_code,      /*tex |\ifrelax| */
+    if_empty_code,          /*tex |\ifempty| */
+    if_relax_code,          /*tex |\ifrelax| */
     if_boolean_code,        /*tex |\ifboolean| */
     if_numexpression_code,  /*tex |\ifnumexpression| */
     if_dimexpression_code,  /*tex |\ifdimexpression| */
@@ -104,15 +107,16 @@ typedef enum if_test_codes {
     if_has_xtoks_code,      /*tex |\ifhasxtoks| */
     if_has_char_code,       /*tex |\ifhaschar| */
     if_insert_code,         /*tex |\ifinsert| */
+    if_in_alignment_code,   /*tex |\ifinalignment| */
  // if_bitwise_and_code,    /*tex |\ifbitwiseand| */
 } if_test_codes;
 
 # define first_if_test_code fi_code
-# define last_if_test_code  if_insert_code
+# define last_if_test_code  if_in_alignment_code
 //define last_if_test_code  if_bitwise_and_code
 
 # define first_real_if_test_code if_char_code
-# define last_real_if_test_code  if_insert_code
+# define last_real_if_test_code  if_in_alignment_code
 //define last_real_if_test_code  if_bitwise_and_code
 
 typedef struct condition_state_info {
@@ -124,8 +128,8 @@ typedef struct condition_state_info {
     int       if_limit;   /*tex upper bound on |fi_or_else| codes */
     int       if_line;    /*tex line where that conditional began */
     int       skip_line;  /*tex skipping began here */
-    halfword  chk_num;
-    scaled    chk_dim;
+    halfword  chk_integer;
+    scaled    chk_dimension;
     halfword  if_nesting;
     halfword  padding;
 } condition_state_info ;
